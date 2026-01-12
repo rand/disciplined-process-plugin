@@ -1,10 +1,10 @@
 {
-  "name": "disciplined-process-marketplace",
+  "name": "disciplined-process-plugin",
   "owner": {
     "name": "Rand Fitzpatrick",
     "url": "https://github.com/rand"
   },
-  "description": "Marketplace for the Disciplined Process plugin - rigorous AI-assisted development workflows",
+  "description": "Disciplined Process plugin - rigorous AI-assisted development workflows",
   "plugins": [
     {
       "name": "disciplined-process",

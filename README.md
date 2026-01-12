@@ -19,7 +19,7 @@ claude --version
 
 In Claude Code, run:
 ```bash
-/plugin marketplace add rand/disciplined-process-marketplace
+/plugin marketplace add rand/disciplined-process-plugin
 ```
 
 This registers the marketplace so you can install plugins from it.
@@ -27,7 +27,7 @@ This registers the marketplace so you can install plugins from it.
 ### Step 2: Install the Plugin
 
 ```bash
-/plugin install disciplined-process@disciplined-process-marketplace
+/plugin install disciplined-process@disciplined-process-plugin
 ```
 
 ### Step 3: Verify Installation
@@ -89,10 +89,10 @@ When a new version is released:
 
 ```bash
 # Update the marketplace first
-/plugin marketplace update rand/disciplined-process-marketplace
+/plugin marketplace update rand/disciplined-process-plugin
 
 # Then update the plugin
-/plugin update disciplined-process@disciplined-process-marketplace
+/plugin update disciplined-process@disciplined-process-plugin
 ```
 
 To check for available updates:
@@ -104,12 +104,12 @@ To check for available updates:
 
 To remove the plugin:
 ```bash
-/plugin uninstall disciplined-process@disciplined-process-marketplace
+/plugin uninstall disciplined-process@disciplined-process-plugin
 ```
 
 To also remove the marketplace:
 ```bash
-/plugin marketplace remove rand/disciplined-process-marketplace
+/plugin marketplace remove rand/disciplined-process-plugin
 ```
 
 Note: Uninstalling the plugin does not remove files created by `/dp:init` in your projects (configs, specs, ADRs, etc.). Remove those manually if needed.
@@ -165,7 +165,7 @@ See [disciplined-process-plugin/README.md](./disciplined-process-plugin/README.m
 ## Repository Structure
 
 ```
-disciplined-process-marketplace/
+disciplined-process-plugin/
 ├── .claude-plugin/
 │   └── marketplace.json        # Marketplace manifest
 ├── disciplined-process-plugin/ # The main plugin
@@ -191,5 +191,5 @@ Contributions welcome! Please follow the disciplined process (naturally).
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/rand/disciplined-process-marketplace/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rand/disciplined-process-marketplace/discussions)
+- **Issues**: [GitHub Issues](https://github.com/rand/disciplined-process-plugin/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/rand/disciplined-process-plugin/discussions)

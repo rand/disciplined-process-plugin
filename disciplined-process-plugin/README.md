@@ -25,13 +25,13 @@ Inspired by the [Rue language](https://github.com/rue-language/rue) development 
 ### Step 1: Add the Marketplace
 
 ```bash
-/plugin marketplace add rand/disciplined-process-marketplace
+/plugin marketplace add rand/disciplined-process-plugin
 ```
 
 ### Step 2: Install the Plugin
 
 ```bash
-/plugin install disciplined-process@disciplined-process-marketplace
+/plugin install disciplined-process@disciplined-process-plugin
 ```
 
 ### Step 3: Verify Installation
@@ -237,10 +237,10 @@ When new versions are released:
 
 ```bash
 # Update marketplace metadata
-/plugin marketplace update rand/disciplined-process-marketplace
+/plugin marketplace update rand/disciplined-process-plugin
 
 # Update the plugin
-/plugin update disciplined-process@disciplined-process-marketplace
+/plugin update disciplined-process@disciplined-process-plugin
 
 # Verify the update
 /dp:help
@@ -255,10 +255,10 @@ Check for updates:
 
 ```bash
 # Remove the plugin
-/plugin uninstall disciplined-process@disciplined-process-marketplace
+/plugin uninstall disciplined-process@disciplined-process-plugin
 
 # Optionally remove the marketplace
-/plugin marketplace remove rand/disciplined-process-marketplace
+/plugin marketplace remove rand/disciplined-process-plugin
 ```
 
 Note: This does not remove project files created by `/dp:init`. To fully clean up:
@@ -272,7 +272,7 @@ rm -rf .claude/dp-config.yaml docs/spec docs/adr docs/process tests/ CLAUDE.md .
 
 1. Verify installation: `/plugin list`
 2. Restart Claude Code
-3. Reinstall: `/plugin install disciplined-process@disciplined-process-marketplace`
+3. Reinstall: `/plugin install disciplined-process@disciplined-process-plugin`
 
 ### `/dp:init` fails
 
@@ -350,5 +350,5 @@ MIT
 ## Support
 
 - **Documentation**: See `commands/` and `skills/` directories for detailed docs
-- **Issues**: [GitHub Issues](https://github.com/rand/disciplined-process-marketplace/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rand/disciplined-process-marketplace/discussions)
+- **Issues**: [GitHub Issues](https://github.com/rand/disciplined-process-plugin/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/rand/disciplined-process-plugin/discussions)
