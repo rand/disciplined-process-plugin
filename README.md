@@ -1,6 +1,8 @@
-# Disciplined Process Marketplace
+# Disciplined Process Plugin
 
-A Claude Code plugin marketplace for rigorous AI-assisted development workflows.
+A rigorous, traceable AI-assisted development workflow plugin for Claude Code.
+
+Inspired by the [Rue language](https://github.com/rue-language/rue) development process, this plugin enforces specification-first, test-driven development with full traceability.
 
 ## Prerequisites
 
@@ -15,14 +17,14 @@ claude --version
 
 ## Installation
 
-### Step 1: Add the Marketplace
+### Step 1: Add the Plugin Repository
 
 In Claude Code, run:
 ```bash
 /plugin marketplace add rand/disciplined-process-plugin
 ```
 
-This registers the marketplace so you can install plugins from it.
+This registers the plugin repository so you can install plugins from it.
 
 ### Step 2: Install the Plugin
 
@@ -88,7 +90,7 @@ You should see the help output and your configuration file.
 When a new version is released:
 
 ```bash
-# Update the marketplace first
+# Update the plugin repository metadata
 /plugin marketplace update rand/disciplined-process-plugin
 
 # Then update the plugin
@@ -107,7 +109,7 @@ To remove the plugin:
 /plugin uninstall disciplined-process@disciplined-process-plugin
 ```
 
-To also remove the marketplace:
+To also remove the plugin repository:
 ```bash
 /plugin marketplace remove rand/disciplined-process-plugin
 ```
@@ -146,19 +148,14 @@ The plugin scripts need execute permissions:
 chmod +x .claude/scripts/*.sh
 ```
 
-## Available Plugins
+## Features
 
-### disciplined-process
-
-A rigorous, traceable AI-assisted development workflow inspired by the [Rue language](https://github.com/rue-language/rue) project.
-
-**Features:**
-- Specification-first development with traceable paragraph IDs
-- Test-driven development with four test types (unit, integration, property, e2e)
-- Architecture Decision Records (ADRs)
-- Pluggable task tracking (Beads, GitHub Issues, Linear, Markdown)
-- Configurable enforcement (strict, guided, minimal)
-- Hooks for process enforcement
+- **Specification-first**: Write specs before code, with traceable paragraph IDs
+- **Test-driven**: Tests reference specs, run before implementation
+- **ADRs**: Document architectural decisions systematically
+- **Task tracking**: Dependency-aware work management (Beads default, pluggable)
+- **Traceability**: Every line links to specs via `@trace` markers
+- **Enforcement**: Configurable hooks enforce the process (or just guide)
 
 See [disciplined-process-plugin/README.md](./disciplined-process-plugin/README.md) for full documentation.
 
@@ -167,10 +164,10 @@ See [disciplined-process-plugin/README.md](./disciplined-process-plugin/README.m
 ```
 disciplined-process-plugin/
 ├── .claude-plugin/
-│   └── marketplace.json        # Marketplace manifest
-├── disciplined-process-plugin/ # The main plugin
+│   └── marketplace.json        # Plugin registry manifest
+├── disciplined-process-plugin/ # Plugin implementation
 │   ├── .claude-plugin/
-│   │   └── plugin.json
+│   │   └── plugin.json         # Plugin metadata
 │   ├── commands/               # /dp:* commands
 │   ├── agents/                 # Code review agent
 │   ├── skills/                 # Auto-invoked skills

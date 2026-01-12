@@ -22,7 +22,7 @@ Inspired by the [Rue language](https://github.com/rue-language/rue) development 
 
 ## Installation
 
-### Step 1: Add the Marketplace
+### Step 1: Add the Plugin Repository
 
 ```bash
 /plugin marketplace add rand/disciplined-process-plugin
@@ -236,7 +236,7 @@ project/
 When new versions are released:
 
 ```bash
-# Update marketplace metadata
+# Update plugin repository metadata
 /plugin marketplace update rand/disciplined-process-plugin
 
 # Update the plugin
@@ -257,7 +257,7 @@ Check for updates:
 # Remove the plugin
 /plugin uninstall disciplined-process@disciplined-process-plugin
 
-# Optionally remove the marketplace
+# Optionally remove the plugin repository
 /plugin marketplace remove rand/disciplined-process-plugin
 ```
 
