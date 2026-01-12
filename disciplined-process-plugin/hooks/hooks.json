@@ -1,0 +1,95 @@
+{
+  "$schema": "https://claude.ai/schemas/hooks.json",
+  "description": "Disciplined process hooks for workflow enforcement",
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": "Bash(git commit*)",
+      "description": "Enforce tests pass before commit (strict mode)",
+      "config": {
+        "enforcement": "strict"
+      },
+      "hooks": [
+        {
+          "type": "command",
+          "command": "scripts/pre-commit-check.sh",
+          "timeout": 60000,
+          "blocking": true
+        }
+      ]
+    },
+    {
+      "event": "PostToolUse", 
+      "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)",
+      "description": "Check for spec trace markers in implementation files",
+      "config": {
+        "enforcement": "guided"
+      },
+      "hooks": [
+        {
+          "type": "command",
+          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
+          "timeout": 5000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Write(*.py)",
+      "description": "Check for spec trace markers in Python files",
+      "config": {
+        "enforcement": "guided"
+      },
+      "hooks": [
+        {
+          "type": "command", 
+          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
+          "timeout": 5000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Write(*.rs)",
+      "description": "Check for spec trace markers in Rust files", 
+      "config": {
+        "enforcement": "guided"
+      },
+      "hooks": [
+        {
+          "type": "command",
+          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
+          "timeout": 5000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "SessionStart",
+      "description": "Remind about ready work at session start",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "scripts/session-start.sh",
+          "timeout": 10000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "PreToolUse",
+      "matcher": "Bash(git push*)",
+      "description": "Sync task tracker before push",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "scripts/pre-push-sync.sh",
+          "timeout": 30000,
+          "blocking": false
+        }
+      ]
+    }
+  ]
+}

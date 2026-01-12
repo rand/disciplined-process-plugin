@@ -1,0 +1,15 @@
+{
+  "name": "disciplined-process-marketplace",
+  "owner": {
+    "name": "Rand Fitzpatrick",
+    "url": "https://github.com/rand"
+  },
+  "description": "Marketplace for the Disciplined Process plugin - rigorous AI-assisted development workflows",
+  "plugins": [
+    {
+      "name": "disciplined-process",
+      "source": "./disciplined-process-plugin",
+      "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management"
+    }
+  ]
+}

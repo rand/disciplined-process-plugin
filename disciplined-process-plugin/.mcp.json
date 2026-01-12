@@ -1,0 +1,12 @@
+{
+  "$schema": "https://claude.ai/schemas/mcp.json",
+  "mcpServers": {
+    "beads": {
+      "command": "bd",
+      "args": ["mcp"],
+      "description": "Beads task tracker MCP server for dependency-aware issue management",
+      "optional": true,
+      "env": {}
+    }
+  }
+}

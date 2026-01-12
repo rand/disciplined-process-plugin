@@ -1,0 +1,26 @@
+{
+  "name": "disciplined-process",
+  "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management. Inspired by the Rue language development process.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Rand Fitzpatrick",
+    "url": "https://github.com/rand"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rand/disciplined-process-marketplace"
+  },
+  "license": "MIT",
+  "keywords": [
+    "workflow",
+    "tdd",
+    "specification",
+    "adr",
+    "beads",
+    "traceability",
+    "process"
+  ],
+  "engines": {
+    "claude-code": ">=2.0.0"
+  }
+}
