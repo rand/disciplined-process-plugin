@@ -2,191 +2,161 @@
 
 A rigorous, traceable AI-assisted development workflow plugin for Claude Code.
 
-Inspired by the [Rue language](https://github.com/rue-language/rue) development process, this plugin enforces specification-first, test-driven development with full traceability.
+## Why Use This?
 
-## Prerequisites
+AI coding assistants are powerful but can produce inconsistent results. This plugin brings discipline to AI-assisted development by enforcing a proven workflow:
 
-- **Claude Code** version 2.0.0 or higher
-- **Git** (for the Beads task tracker, if used)
-- A project directory where you want to use the disciplined process
+- **Specify before you code** — Write requirements with traceable IDs before implementation
+- **Test before you implement** — Tests reference specs and must exist before code
+- **Document decisions** — Architecture Decision Records capture the "why"
+- **Track dependencies** — Know what's ready to work on and what's blocked
+- **Enforce or guide** — Strict mode blocks bad commits; guided mode just warns
 
-Check your Claude Code version:
-```bash
-claude --version
+Inspired by the [Rue language](https://github.com/rue-language/rue) development process.
+
+## Features
+
+- **Specification-first**: Write specs before code, with traceable paragraph IDs (`[SPEC-01.03]`)
+- **Test-driven**: Tests reference specs via `@trace` markers, run before implementation
+- **ADRs**: Document architectural decisions systematically
+- **Task tracking**: Dependency-aware work management (Beads default, or GitHub/Linear/Markdown)
+- **Traceability**: Every line links to specs — know why code exists
+- **Enforcement**: Configurable hooks enforce the process (strict), warn (guided), or stay out of the way (minimal)
+
+## The Workflow
+
 ```
+┌─────────────────────────────────────────────────────────────┐
+│ 1. ORIENT   → Check ready work, claim a task                │
+│    /dp:task ready                                           │
+├─────────────────────────────────────────────────────────────┤
+│ 2. SPECIFY  → Write/update spec with [SPEC-XX.YY] IDs       │
+│    /dp:spec create <section> "<title>"                      │
+├─────────────────────────────────────────────────────────────┤
+│ 3. DECIDE   → Create ADR if architectural choice needed     │
+│    /dp:adr create "<decision title>"                        │
+├─────────────────────────────────────────────────────────────┤
+│ 4. TEST     → Write tests with @trace SPEC-XX.YY markers    │
+│    Tests should FAIL initially (red phase)                  │
+├─────────────────────────────────────────────────────────────┤
+│ 5. IMPLEMENT → Write minimal code to pass tests             │
+│    Add @trace SPEC-XX.YY comments to implementation         │
+├─────────────────────────────────────────────────────────────┤
+│ 6. REVIEW   → Run /dp:review checklist                      │
+├─────────────────────────────────────────────────────────────┤
+│ 7. CLOSE    → Complete task, commit with ID                 │
+│    /dp:task close <id>                                      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Quick Start
+
+```bash
+# 1. Add the plugin repository
+/plugin marketplace add rand/disciplined-process-plugin
+
+# 2. Install the plugin
+/plugin install disciplined-process@disciplined-process-plugin
+
+# 3. Initialize your project (interactive wizard)
+/dp:init
+
+# 4. Start working
+/dp:task ready
+```
+
+See [full documentation](./disciplined-process-plugin/README.md) for detailed usage.
 
 ## Installation
 
-### Step 1: Add the Plugin Repository
+### Prerequisites
 
-In Claude Code, run:
-```bash
-/plugin marketplace add rand/disciplined-process-plugin
-```
+- **Claude Code** version 2.0.0 or higher
+- **Git** (for Beads task tracker, if used)
 
-This registers the plugin repository so you can install plugins from it.
+### Step-by-Step
 
-### Step 2: Install the Plugin
+1. **Add the plugin repository:**
+   ```bash
+   /plugin marketplace add rand/disciplined-process-plugin
+   ```
 
-```bash
-/plugin install disciplined-process@disciplined-process-plugin
-```
+2. **Install the plugin:**
+   ```bash
+   /plugin install disciplined-process@disciplined-process-plugin
+   ```
 
-### Step 3: Verify Installation
+3. **Verify installation:**
+   ```bash
+   /plugin list
+   ```
+   You should see `disciplined-process` listed.
 
-Confirm the plugin is installed:
-```bash
-/plugin list
-```
+4. **Initialize your project:**
+   ```bash
+   /dp:init
+   ```
+   The wizard will configure language, task tracking, test frameworks, and enforcement level.
 
-You should see `disciplined-process` in the list of installed plugins.
+5. **Validate setup:**
+   ```bash
+   /dp:help                      # Should show command reference
+   cat .claude/dp-config.yaml    # Should show your configuration
+   ```
 
-### Step 4: Initialize Your Project
+## Commands
 
-Navigate to your project directory and run:
-```bash
-/dp:init
-```
+| Command | Description |
+|---------|-------------|
+| `/dp:init` | Initialize project with interactive wizard |
+| `/dp:task` | Task tracking (ready, create, show, update, close) |
+| `/dp:spec` | Specification management (create, add, coverage) |
+| `/dp:adr` | Architecture Decision Records |
+| `/dp:review` | Code review checklist |
+| `/dp:help` | Help and workflow reference |
 
-This launches an interactive wizard that will:
-1. Detect your project language
-2. Configure task tracking (Beads recommended)
-3. Set up test frameworks
-4. Choose enforcement level (strict/guided/minimal)
-5. Create all necessary files and directories
-
-### Step 5: Validate Setup
-
-After initialization, verify everything is working:
-
-```bash
-# Check the plugin help works
-/dp:help
-
-# View your configuration
-cat .claude/dp-config.yaml
-
-# If using Beads task tracking, verify it's initialized
-bd stats
-```
-
-You should see the help output and your configuration file.
-
-## Quick Start After Installation
+## Updating
 
 ```bash
-# See available work
-/dp:task ready
-
-# Create your first specification
-/dp:spec create 01-core "Core Functionality"
-
-# Start the workflow
-/dp:help workflow
-```
-
-## Updating the Plugin
-
-When a new version is released:
-
-```bash
-# Update the plugin repository metadata
 /plugin marketplace update rand/disciplined-process-plugin
-
-# Then update the plugin
 /plugin update disciplined-process@disciplined-process-plugin
-```
-
-To check for available updates:
-```bash
-/plugin outdated
 ```
 
 ## Uninstalling
 
-To remove the plugin:
 ```bash
 /plugin uninstall disciplined-process@disciplined-process-plugin
-```
-
-To also remove the plugin repository:
-```bash
 /plugin marketplace remove rand/disciplined-process-plugin
 ```
 
-Note: Uninstalling the plugin does not remove files created by `/dp:init` in your projects (configs, specs, ADRs, etc.). Remove those manually if needed.
+Note: Project files created by `/dp:init` are not removed automatically.
 
 ## Troubleshooting
 
-### "Command not found" after installation
-
-1. Verify the plugin is installed: `/plugin list`
-2. Try restarting Claude Code
-3. Re-run the installation command
+### Commands not recognized
+1. Verify installation: `/plugin list`
+2. Restart Claude Code
+3. Reinstall the plugin
 
 ### Wizard doesn't detect my language
-
-The wizard checks for `package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, and `build.zig`. If your project uses a different setup, select "other" when prompted.
+Select "other" when prompted. The wizard checks for `package.json`, `Cargo.toml`, `pyproject.toml`, `go.mod`, and `build.zig`.
 
 ### Hooks not running
+1. Check enforcement level isn't "minimal"
+2. Verify `.claude/settings.json` exists
+3. Run `chmod +x .claude/scripts/*.sh`
 
-1. Check that `.claude/settings.json` was created
-2. Verify your enforcement level isn't set to "minimal" (which disables hooks)
-3. Review hook configuration: `cat .claude/settings.json`
-
-### Beads task tracker issues
-
-If `bd` commands fail:
-1. Ensure `.beads/` directory exists
-2. Run `bd init` manually if needed
-3. Check git is initialized in your project
-
-### Permission errors on scripts
-
-The plugin scripts need execute permissions:
-```bash
-chmod +x .claude/scripts/*.sh
-```
-
-## Features
-
-- **Specification-first**: Write specs before code, with traceable paragraph IDs
-- **Test-driven**: Tests reference specs, run before implementation
-- **ADRs**: Document architectural decisions systematically
-- **Task tracking**: Dependency-aware work management (Beads default, pluggable)
-- **Traceability**: Every line links to specs via `@trace` markers
-- **Enforcement**: Configurable hooks enforce the process (or just guide)
-
-See [disciplined-process-plugin/README.md](./disciplined-process-plugin/README.md) for full documentation.
-
-## Repository Structure
-
-```
-disciplined-process-plugin/
-├── .claude-plugin/
-│   └── marketplace.json        # Plugin registry manifest
-├── disciplined-process-plugin/ # Plugin implementation
-│   ├── .claude-plugin/
-│   │   └── plugin.json         # Plugin metadata
-│   ├── commands/               # /dp:* commands
-│   ├── agents/                 # Code review agent
-│   ├── skills/                 # Auto-invoked skills
-│   ├── hooks/                  # Process enforcement
-│   ├── scripts/                # Hook implementations
-│   ├── references/             # Configuration docs
-│   └── assets/                 # Templates
-└── README.md
-```
+### Beads commands fail
+1. Ensure Git is initialized: `git status`
+2. Check `.beads/` directory exists
+3. Run `bd init` manually if needed
 
 ## License
 
 MIT
 
-## Contributing
-
-Contributions welcome! Please follow the disciplined process (naturally).
-
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/rand/disciplined-process-plugin/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/rand/disciplined-process-plugin/discussions)
+- [Documentation](./disciplined-process-plugin/README.md)
+- [GitHub Issues](https://github.com/rand/disciplined-process-plugin/issues)
+- [Discussions](https://github.com/rand/disciplined-process-plugin/discussions)
