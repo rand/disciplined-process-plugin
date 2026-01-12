@@ -28,10 +28,10 @@ for file in $FILES; do
     ext="${file##*.}"
     
     case "$ext" in
-        ts|tsx|js|jsx|go|rs|zig)
+        ts|tsx|js|jsx|go|rs|zig|c|cpp|h|hpp|java|swift|kt)
             comment="//"
             ;;
-        py)
+        py|rb|sh|bash|zsh)
             comment="#"
             ;;
         *)

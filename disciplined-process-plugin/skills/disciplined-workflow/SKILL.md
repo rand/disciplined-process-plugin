@@ -17,25 +17,11 @@ This skill enforces a rigorous, traceable development process inspired by the Ru
 
 ## The Development Loop
 
-For any non-trivial work, follow this sequence:
+For any non-trivial work, follow the 7-phase loop:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ 1. ORIENT: Check ready work (bd ready), understand context      │
-├─────────────────────────────────────────────────────────────────┤
-│ 2. SPECIFY: Write/update spec with paragraph IDs                │
-├─────────────────────────────────────────────────────────────────┤
-│ 3. DECIDE: Create ADR if architectural choice needed            │
-├─────────────────────────────────────────────────────────────────┤
-│ 4. TEST: Write tests that reference spec paragraph IDs          │
-├─────────────────────────────────────────────────────────────────┤
-│ 5. IMPLEMENT: Write code, run tests, iterate                    │
-├─────────────────────────────────────────────────────────────────┤
-│ 6. REVIEW: Self-review against code-review checklist            │
-├─────────────────────────────────────────────────────────────────┤
-│ 7. CLOSE: Update task status, file discovered work              │
-└─────────────────────────────────────────────────────────────────┘
-```
+**Orient → Specify → Decide → Test → Implement → Review → Close**
+
+See `references/workflow.md` for the full workflow reference with commands.
 
 ## Workflow Integration
 
@@ -45,13 +31,13 @@ Before implementing anything:
 
 ```bash
 # Check what's ready to work on
-bd ready --json
+/dp:task ready
 
 # Claim a task
-bd update <task-id> --status in_progress
+/dp:task update <task-id> --status in_progress
 
 # Review the task context
-bd show <task-id>
+/dp:task show <task-id>
 ```
 
 ### During Implementation
@@ -60,8 +46,7 @@ When you discover related work:
 
 ```bash
 # File discovered issues, linked to parent
-bd create "Discovered: <issue>" -t <type> -p <priority>
-bd dep add <new-id> <parent-id> --type discovered-from
+/dp:task discover "Found: <issue>" --from <parent-id> -p <priority>
 ```
 
 ### Completing Work
@@ -69,11 +54,10 @@ bd dep add <new-id> <parent-id> --type discovered-from
 ```bash
 # Run quality gates (tests, lint, build)
 # Close the task
-bd close <task-id> --reason "Implemented per spec [SPEC-ID]"
+/dp:task close <task-id> --reason "Implemented per spec [SPEC-ID]"
 
-# Export and commit
-bd sync
-git add -A && git commit -m "feat: <description> (bd-<id>)"
+# Commit with task reference
+git add -A && git commit -m "feat: <description> (<task-id>)"
 ```
 
 ## Project Structure
@@ -112,20 +96,6 @@ This workflow supports three enforcement levels (configured in `.claude/settings
 1. **Strict** (default): Hooks block commits without passing tests and spec references
 2. **Guided**: Hooks warn but don't block; skills suggest best practices
 3. **Minimal**: Skills available but no enforcement; for exploratory work
-
-See `references/enforcement-config.md` for configuration details.
-
-## Quick Reference
-
-| Phase | Key Actions |
-|-------|-------------|
-| Orient | `bd ready`, review context, claim task |
-| Specify | Create/update spec with `[SPEC-XX.YY]` IDs |
-| Decide | Create ADR if needed via `/dp:adr` |
-| Test | Write tests with `@trace SPEC-XX.YY` markers |
-| Implement | Code until tests pass |
-| Review | Run `/dp:review` checklist |
-| Close | `bd close`, commit with task ID |
 
 ## Related Skills
 

@@ -34,7 +34,7 @@
 
 This project uses the **disciplined process** workflow:
 
-1. **Orient**: Check ready work with `bd ready`
+1. **Orient**: Check ready work with `/dp:task ready`
 2. **Specify**: Update specs in `docs/spec/` with `[SPEC-XX.YY]` IDs
 3. **Decide**: Create ADRs in `docs/adr/` for architectural choices
 4. **Test**: Write tests first with `@trace SPEC-XX.YY` markers
@@ -93,17 +93,16 @@ This project uses **{provider}** for task tracking.
 
 ```bash
 # See ready work
-bd ready
+/dp:task ready
 
 # Claim a task
-bd update <id> --status in_progress
+/dp:task update <id> --status in_progress
 
 # File discovered work
-bd create "Found issue" -t bug -p 2
-bd dep add <new-id> <current-id> --type discovered-from
+/dp:task discover "Found issue" --from <current-id> -p 2
 
 # Complete work
-bd close <id> --reason "Implemented per SPEC-XX.YY"
+/dp:task close <id> --reason "Implemented per SPEC-XX.YY"
 ```
 
 ---

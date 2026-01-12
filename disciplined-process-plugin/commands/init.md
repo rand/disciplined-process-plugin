@@ -32,15 +32,37 @@ Primary language: {detect or ask: rust, typescript, python, go, zig, other}
 
 This workflow uses task tracking for work management.
 
+Checking available providers...
+  ✓ Beads (bd CLI found, git initialized)
+  ✗ GitHub Issues (gh CLI not found)
+  ✓ Linear (linear CLI found)
+  ✓ Markdown (always available)
+  ✓ None (skip tracking)
+
 Options:
-  1. Beads (recommended) - Git-backed, dependency-aware issue tracker
-  2. GitHub Issues - Use gh CLI for issue management
-  3. Linear - Use linear CLI
+  1. Beads (recommended) - Git-backed, dependency-aware
+     Features: ready work, dependencies, discovered-from linking
+  2. GitHub Issues - GitHub issue integration
+     Features: ready work (via labels), milestones
+     ⚠️  Requires: gh CLI (not found - install with 'brew install gh')
+  3. Linear - Linear app integration
+     Features: ready work, native priorities
   4. Markdown - Plain markdown files in docs/tasks/
+     Features: ready work (manual status)
   5. None - Skip task tracking
 
-Choice [1]: 
+Choice [1]:
 ```
+
+**CLI Verification**: Before accepting a provider choice, verify the required CLI is available:
+- **Beads**: Check `command -v bd` and `git rev-parse --git-dir`
+- **GitHub**: Check `command -v gh` and `gh auth status`
+- **Linear**: Check `command -v linear`
+
+If a provider's CLI is missing, show installation instructions and allow:
+- Install now (if possible)
+- Choose different provider
+- Proceed anyway (with warning)
 
 ### Step 3: Test Frameworks
 ```
@@ -166,7 +188,7 @@ After collecting configuration:
 Next steps:
   1. Review and customize docs/spec/00-overview.md
   2. Create your first spec: /dp:spec create 01-core
-  3. Check ready work: bd ready (or your tracking tool)
+  3. Check ready work: /dp:task ready
   4. Start implementing with test-first approach
 
 Run '/dp:help' for command reference.

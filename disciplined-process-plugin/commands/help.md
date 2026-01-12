@@ -75,74 +75,35 @@ Provider: (see dp-config.yaml)
 
 ```
 /dp:help workflow
-
-Disciplined Development Workflow
-================================
-
-┌─────────────────────────────────────────────────────────────┐
-│ ORIENT                                                       │
-│   Check ready work, understand context, claim task           │
-│   → /dp:task ready                                           │
-│   → /dp:task update <id> --status in_progress               │
-├─────────────────────────────────────────────────────────────┤
-│ SPECIFY                                                      │
-│   Write/update spec with paragraph IDs [SPEC-XX.YY]         │
-│   → /dp:spec create <section> <title>                       │
-│   → /dp:spec add <section> "<requirement>"                  │
-├─────────────────────────────────────────────────────────────┤
-│ DECIDE                                                       │
-│   Create ADR if architectural choice needed                  │
-│   → /dp:adr create "<decision title>"                       │
-├─────────────────────────────────────────────────────────────┤
-│ TEST                                                         │
-│   Write tests referencing spec paragraph IDs                 │
-│   Add @trace SPEC-XX.YY markers to tests                    │
-│   Run tests: they should FAIL (red phase)                   │
-├─────────────────────────────────────────────────────────────┤
-│ IMPLEMENT                                                    │
-│   Write minimal code to pass tests (green phase)            │
-│   Add @trace SPEC-XX.YY comments to implementation          │
-│   Refactor while keeping tests green                        │
-├─────────────────────────────────────────────────────────────┤
-│ REVIEW                                                       │
-│   Self-review against checklist                             │
-│   → /dp:review                                              │
-│   Fix blocking issues, file non-blocking as tasks           │
-├─────────────────────────────────────────────────────────────┤
-│ CLOSE                                                        │
-│   Update task, commit with task ID                          │
-│   → /dp:task close <id> --reason "<reason>"                 │
-│   → git commit -m "feat: <desc> (bd-<id>)"                  │
-└─────────────────────────────────────────────────────────────┘
 ```
+
+Displays the full 7-phase workflow from `references/workflow.md`:
+
+**Orient → Specify → Decide → Test → Implement → Review → Close**
+
+| Phase | Key Action |
+|-------|------------|
+| Orient | `/dp:task ready`, claim task |
+| Specify | Add `[SPEC-XX.YY]` requirements |
+| Decide | Create ADR if needed |
+| Test | Write tests with `@trace` markers |
+| Implement | Code until tests pass |
+| Review | `/dp:review` checklist |
+| Close | `/dp:task close`, commit |
 
 ## Quick Reference
 
 ```
 /dp:help quick
-
-Quick Reference
-===============
-
-Start work:
-  /dp:task ready              # Find work
-  /dp:task update X --status in_progress
-
-Add spec:
-  /dp:spec add 03 "X MUST do Y"
-
-Create ADR:
-  /dp:adr create "Use X for Y"
-
-Check coverage:
-  /dp:spec coverage
-
-Review changes:
-  /dp:review --staged
-
-Complete task:
-  /dp:task close X --reason "Done"
-
-File discovered work:
-  /dp:task discover "Found issue" --from X
 ```
+
+| Action | Command |
+|--------|---------|
+| Find work | `/dp:task ready` |
+| Claim task | `/dp:task update <id> --status in_progress` |
+| Add requirement | `/dp:spec add <section> "<requirement>"` |
+| Create ADR | `/dp:adr create "<title>"` |
+| Check coverage | `/dp:spec coverage` |
+| Review changes | `/dp:review --staged` |
+| Complete task | `/dp:task close <id> --reason "Done"` |
+| File discovered work | `/dp:task discover "<issue>" --from <id>` |

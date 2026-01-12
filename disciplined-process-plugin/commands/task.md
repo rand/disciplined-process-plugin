@@ -138,36 +138,58 @@ Create a discovered task linked to current work.
 → Linked: discovered-from bd-a1b2
 ```
 
-## Provider-Specific Notes
+## Provider Feature Matrix
 
-### Beads (default)
-- Full feature support
-- Uses `bd` CLI directly
-- Dependency tracking built-in
+Not all features work with all providers. Choose based on your needs:
+
+| Feature | Beads | GitHub | Linear | Markdown | None |
+|---------|:-----:|:------:|:------:|:--------:|:----:|
+| `ready` - find available work | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `create` - create tasks | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `show` - view details | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `update` - change status | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `close` - complete tasks | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `discover` - linked discovery | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Dependency blocking | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Auto-sync with remote | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Offline support | ✅ | ❌ | ❌ | ✅ | ✅ |
+
+**Legend**: ✅ Full support | ⚠️ Partial (creates task, no dependency link) | ❌ Not supported
+
+## Provider Details
+
+### Beads (recommended)
+- **CLI**: `bd` (install: see beads documentation)
+- **Requires**: Git repository
+- **Strengths**: Full dependency tracking, discovered-from linking, git-native, works offline
+- **Limitations**: Requires beads CLI installation
 
 ### GitHub Issues
-- Uses `gh issue` CLI
-- Labels for type/priority
-- Milestones for epics
+- **CLI**: `gh` (install: `brew install gh` or https://cli.github.com)
+- **Requires**: GitHub repo, authenticated `gh auth login`
+- **Strengths**: Native GitHub integration, team collaboration, web UI
+- **Limitations**: No dependency blocking, `discover` creates unlinked issues
 
 ### Linear
-- Uses `linear` CLI
-- Native priority support
-- Team/project scoping
+- **CLI**: `linear` (install: see Linear documentation)
+- **Requires**: Linear account, authenticated CLI
+- **Strengths**: Native priorities, team/project scoping, good UI
+- **Limitations**: `discover` creates unlinked issues
 
 ### Markdown
-- Files in `docs/tasks/`
-- YAML frontmatter for metadata
-- Manual dependency tracking
+- **CLI**: None required
+- **Location**: `docs/tasks/*.md` with YAML frontmatter
+- **Strengths**: No dependencies, works anywhere, human-readable
+- **Limitations**: No auto-sync, no dependency tracking, manual status updates
 
-## None Provider
+### None
+- Disables task tracking entirely
+- All `/dp:task` commands print a reminder
+- Use when task tracking is handled externally
 
-When `provider: none`:
-- Commands print reminder to track work manually
-- No automatic task creation
-- Workflow skills still function
+## Graceful Degradation
 
-```
-/dp:task ready
-→ Task tracking disabled. Consider enabling a provider in .claude/dp-config.yaml
-```
+If your configured provider is unavailable (CLI missing, not authenticated, etc.):
+- Commands will warn once per session
+- Workflow continues without blocking
+- Fix with: reinstall CLI, re-authenticate, or change provider in `dp-config.yaml`

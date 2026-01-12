@@ -1,72 +1,24 @@
 # Disciplined Process Plugin
 
-A rigorous, traceable AI-assisted development workflow for Claude Code.
+A rigorous, traceable AI-assisted development workflow for Claude Code. Inspired by the [Rue language](https://github.com/rue-language/rue) development process.
 
-## Why Use This?
-
-AI coding assistants are powerful but can produce inconsistent results. This plugin brings discipline to AI-assisted development by enforcing a proven workflow:
-
-- **Specify before you code** — Write requirements with traceable IDs before implementation
-- **Test before you implement** — Tests reference specs and must exist before code
-- **Document decisions** — Architecture Decision Records capture the "why"
-- **Track dependencies** — Know what's ready to work on and what's blocked
-- **Enforce or guide** — Strict mode blocks bad commits; guided mode just warns
-
-Inspired by the [Rue language](https://github.com/rue-language/rue) development process.
-
-## Features
-
-- **Specification-first**: Write specs before code, with traceable paragraph IDs (`[SPEC-01.03]`)
-- **Test-driven**: Tests reference specs via `@trace` markers, run before implementation
-- **ADRs**: Document architectural decisions systematically
-- **Task tracking**: Dependency-aware work management (Beads default, or GitHub/Linear/Markdown)
-- **Traceability**: Every line links to specs — know why code exists
-- **Enforcement**: Configurable hooks enforce the process (strict), warn (guided), or stay out of the way (minimal)
+See the [project README](../README.md) for overview and installation.
 
 ## The Workflow
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. ORIENT   → Check ready work, claim a task                │
-│    /dp:task ready                                           │
-│    /dp:task update <id> --status in_progress                │
-├─────────────────────────────────────────────────────────────┤
-│ 2. SPECIFY  → Write/update spec with [SPEC-XX.YY] IDs       │
-│    /dp:spec create <section> "<title>"                      │
-│    /dp:spec add <section> "<requirement>"                   │
-├─────────────────────────────────────────────────────────────┤
-│ 3. DECIDE   → Create ADR if architectural choice needed     │
-│    /dp:adr create "<decision title>"                        │
-├─────────────────────────────────────────────────────────────┤
-│ 4. TEST     → Write tests with @trace SPEC-XX.YY markers    │
-│    Tests should FAIL initially (red phase)                  │
-├─────────────────────────────────────────────────────────────┤
-│ 5. IMPLEMENT → Write minimal code to pass tests             │
-│    Add @trace SPEC-XX.YY comments to implementation         │
-├─────────────────────────────────────────────────────────────┤
-│ 6. REVIEW   → Run /dp:review checklist                      │
-│    Fix blocking issues, file non-blocking as tasks          │
-├─────────────────────────────────────────────────────────────┤
-│ 7. CLOSE    → Complete task, commit with ID                 │
-│    /dp:task close <id> --reason "Done"                      │
-└─────────────────────────────────────────────────────────────┘
-```
+A 7-phase loop: **Orient → Specify → Decide → Test → Implement → Review → Close**
 
-## Quick Start
+| Phase | Action | Command |
+|-------|--------|---------|
+| 1. Orient | Find and claim work | `/dp:task ready` |
+| 2. Specify | Write requirements with `[SPEC-XX.YY]` IDs | `/dp:spec add` |
+| 3. Decide | Record architectural choices | `/dp:adr create` |
+| 4. Test | Write failing tests with `@trace` markers | — |
+| 5. Implement | Make tests pass, add `@trace` to code | — |
+| 6. Review | Self-review against checklist | `/dp:review` |
+| 7. Close | Complete task, commit | `/dp:task close` |
 
-```bash
-# 1. Add the plugin repository
-/plugin marketplace add rand/disciplined-process-plugin
-
-# 2. Install the plugin
-/plugin install disciplined-process@disciplined-process-plugin
-
-# 3. Initialize your project (interactive wizard)
-/dp:init
-
-# 4. Start working
-/dp:task ready
-```
+See [references/workflow.md](./references/workflow.md) for detailed phase descriptions.
 
 ## Commands
 
@@ -106,45 +58,6 @@ Inspired by the [Rue language](https://github.com/rue-language/rue) development 
 /dp:adr status                          # Show ADR statuses
 ```
 
-## Installation
-
-### Prerequisites
-
-- **Claude Code** version 2.0.0 or higher
-- **Git** (required for Beads task tracking)
-- For GitHub Issues: `gh` CLI installed and authenticated
-- For Linear: `linear` CLI installed and authenticated
-
-### Step-by-Step
-
-1. **Add the plugin repository:**
-   ```bash
-   /plugin marketplace add rand/disciplined-process-plugin
-   ```
-
-2. **Install the plugin:**
-   ```bash
-   /plugin install disciplined-process@disciplined-process-plugin
-   ```
-
-3. **Verify installation:**
-   ```bash
-   /plugin list
-   ```
-   You should see `disciplined-process` listed.
-
-4. **Initialize your project:**
-   ```bash
-   /dp:init
-   ```
-   The wizard configures language, task tracking, test frameworks, and enforcement level.
-
-5. **Validate setup:**
-   ```bash
-   /dp:help                      # Should show command reference
-   cat .claude/dp-config.yaml    # Should show your configuration
-   ```
-
 ## Configuration
 
 ### Enforcement Levels
@@ -155,15 +68,19 @@ Inspired by the [Rue language](https://github.com/rue-language/rue) development 
 | **Guided** | Hooks warn but don't block |
 | **Minimal** | Skills on demand, no enforcement |
 
+See [references/enforcement-config.md](./references/enforcement-config.md) for per-hook overrides and team recommendations.
+
 ### Task Tracking Providers
 
-| Provider | Description | Requirements |
-|----------|-------------|--------------|
-| **Beads** (default) | Git-backed, dependency-aware | Git |
-| **GitHub Issues** | GitHub issue integration | `gh` CLI |
-| **Linear** | Linear app integration | `linear` CLI |
-| **Markdown** | Plain files in `docs/tasks/` | None |
-| **None** | Skip task tracking | None |
+| Provider | Requirements | Key Features |
+|----------|--------------|--------------|
+| **Beads** (recommended) | Git, `bd` CLI | Dependencies, offline, discovered-from |
+| **GitHub Issues** | `gh` CLI | Team collaboration, web UI |
+| **Linear** | `linear` CLI | Native priorities, projects |
+| **Markdown** | None | No dependencies, human-readable |
+| **None** | None | External tracking |
+
+See [commands/task.md](./commands/task.md) for the full feature matrix and provider details.
 
 ### Project Structure After Init
 
@@ -230,48 +147,14 @@ These skills activate automatically based on context:
 - **tdd-methodology**: Test-first patterns for all test types
 - **adr-authoring**: Decision record format
 
-## Updating
-
-```bash
-/plugin marketplace update rand/disciplined-process-plugin
-/plugin update disciplined-process@disciplined-process-plugin
-```
-
-Check for updates: `/plugin outdated`
-
-## Uninstalling
-
-```bash
-/plugin uninstall disciplined-process@disciplined-process-plugin
-/plugin marketplace remove rand/disciplined-process-plugin
-```
-
-To fully clean up project files:
-```bash
-rm -rf .claude/dp-config.yaml docs/spec docs/adr docs/process tests/ CLAUDE.md .beads/
-```
-
 ## Troubleshooting
 
-### Commands not recognized
-1. Verify installation: `/plugin list`
-2. Restart Claude Code
-3. Reinstall the plugin
+See the [project README](../README.md) for installation and update issues.
 
 ### `/dp:init` fails
 - Ensure you're in a valid project directory
 - Check write permissions
 - Use `/dp:init --force` to overwrite existing files
-
-### Hooks not triggering
-1. Check enforcement level isn't "minimal"
-2. Verify `.claude/settings.json` exists
-3. Run `chmod +x .claude/scripts/*.sh`
-
-### Beads commands fail
-1. Ensure Git is initialized: `git status`
-2. Check `.beads/` directory exists
-3. Run `bd init` manually
 
 ### Trace markers not found
 
@@ -284,13 +167,16 @@ function validateInput(data: string): boolean {
 }
 ```
 
-## License
+### Provider CLI issues
 
-MIT
+If task commands fail, check your provider's CLI:
+- **Beads**: `bd --version` (requires git repo with `.beads/`)
+- **GitHub**: `gh auth status`
+- **Linear**: `linear --version`
 
-## Support
+## More Information
 
-- [Commands Documentation](./commands/)
-- [Skills Documentation](./skills/)
-- [GitHub Issues](https://github.com/rand/disciplined-process-plugin/issues)
-- [Discussions](https://github.com/rand/disciplined-process-plugin/discussions)
+- [Commands Reference](./commands/)
+- [Skills Reference](./skills/)
+- [Workflow Reference](./references/workflow.md)
+- [Enforcement Config](./references/enforcement-config.md)

@@ -19,41 +19,9 @@
       ]
     },
     {
-      "event": "PostToolUse", 
-      "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)",
+      "event": "PostToolUse",
+      "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.py)|Write(*.rs)|Write(*.go)|Write(*.zig)",
       "description": "Check for spec trace markers in implementation files",
-      "config": {
-        "enforcement": "guided"
-      },
-      "hooks": [
-        {
-          "type": "command",
-          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
-          "timeout": 5000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Write(*.py)",
-      "description": "Check for spec trace markers in Python files",
-      "config": {
-        "enforcement": "guided"
-      },
-      "hooks": [
-        {
-          "type": "command", 
-          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
-          "timeout": 5000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Write(*.rs)",
-      "description": "Check for spec trace markers in Rust files", 
       "config": {
         "enforcement": "guided"
       },

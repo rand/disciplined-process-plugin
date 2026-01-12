@@ -84,13 +84,13 @@ Run a structured code review against current changes.
 ⚠️ PERFORMANCE: Consider caching user lookup
    This is called multiple times per request
    
-   Suggested task: bd create "Cache user lookups in auth flow" -p 2
+   Suggested task: /dp:task create "Cache user lookups in auth flow" -p 2
 
 ### src/auth.ts:89
 ⚠️ CODE QUALITY: Function exceeds 50 lines
    Consider extracting validation logic
    
-   Suggested task: bd create "Refactor validateCredentials" -p 3
+   Suggested task: /dp:task create "Refactor validateCredentials" -p 3
 
 ## Summary
 

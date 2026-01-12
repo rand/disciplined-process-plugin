@@ -25,29 +25,9 @@ Inspired by the [Rue language](https://github.com/rue-language/rue) development 
 
 ## The Workflow
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. ORIENT   → Check ready work, claim a task                │
-│    /dp:task ready                                           │
-├─────────────────────────────────────────────────────────────┤
-│ 2. SPECIFY  → Write/update spec with [SPEC-XX.YY] IDs       │
-│    /dp:spec create <section> "<title>"                      │
-├─────────────────────────────────────────────────────────────┤
-│ 3. DECIDE   → Create ADR if architectural choice needed     │
-│    /dp:adr create "<decision title>"                        │
-├─────────────────────────────────────────────────────────────┤
-│ 4. TEST     → Write tests with @trace SPEC-XX.YY markers    │
-│    Tests should FAIL initially (red phase)                  │
-├─────────────────────────────────────────────────────────────┤
-│ 5. IMPLEMENT → Write minimal code to pass tests             │
-│    Add @trace SPEC-XX.YY comments to implementation         │
-├─────────────────────────────────────────────────────────────┤
-│ 6. REVIEW   → Run /dp:review checklist                      │
-├─────────────────────────────────────────────────────────────┤
-│ 7. CLOSE    → Complete task, commit with ID                 │
-│    /dp:task close <id>                                      │
-└─────────────────────────────────────────────────────────────┘
-```
+A 7-phase loop: **Orient → Specify → Decide → Test → Implement → Review → Close**
+
+Each phase has supporting commands (`/dp:task`, `/dp:spec`, `/dp:adr`, `/dp:review`). See [full documentation](./disciplined-process-plugin/README.md) for details.
 
 ## Quick Start
 
