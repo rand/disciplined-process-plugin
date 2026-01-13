@@ -1,5 +1,5 @@
 ---
-description: Create and manage specifications with traceable paragraph IDs. Subcommands: create, add, coverage, list.
+description: Manage specifications with [SPEC-XX.YY] IDs
 argument-hint: <create|add|coverage|list> [options]
 ---
 

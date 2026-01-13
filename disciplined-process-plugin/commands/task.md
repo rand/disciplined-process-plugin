@@ -1,6 +1,6 @@
 ---
-description: Task tracking wrapper. Routes to configured provider (beads, github, linear, markdown). Subcommands: ready, create, show, update, close.
-argument-hint: <ready|create|show|update|close> [options]
+description: Task tracking via configured provider
+argument-hint: <ready|create|show|update|close|discover> [options]
 ---
 
 # Task Command

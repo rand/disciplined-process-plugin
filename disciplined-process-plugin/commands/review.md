@@ -1,5 +1,5 @@
 ---
-description: Run code review checklist against current changes. Provides structured feedback categorized as blocking or non-blocking.
+description: Run code review checklist
 argument-hint: [--staged] [--full] [--json]
 ---
 

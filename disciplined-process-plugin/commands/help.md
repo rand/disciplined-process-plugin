@@ -1,5 +1,5 @@
 ---
-description: Show help for disciplined process commands and workflow.
+description: Show help and workflow reference
 argument-hint: [command]
 ---
 

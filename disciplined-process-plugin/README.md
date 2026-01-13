@@ -24,12 +24,12 @@ See [references/workflow.md](./references/workflow.md) for detailed phase descri
 
 | Command | Description |
 |---------|-------------|
-| `/dp:init` | Initialize project with interactive wizard |
-| `/dp:task` | Task tracking (ready, create, show, update, close) |
-| `/dp:spec` | Specification management (create, add, coverage) |
-| `/dp:adr` | Architecture Decision Records |
-| `/dp:review` | Code review checklist |
-| `/dp:help` | Help and workflow reference |
+| `/dp:init` | Initialize project with wizard |
+| `/dp:task` | Task tracking (ready, create, show, update, close, discover) |
+| `/dp:spec` | Specification management (create, add, coverage, list) |
+| `/dp:adr` | Architecture Decision Records (create, list, status, link) |
+| `/dp:review` | Run code review checklist |
+| `/dp:help` | Show help and workflow reference |
 
 ### Task Commands
 
@@ -39,12 +39,13 @@ See [references/workflow.md](./references/workflow.md) for detailed phase descri
 /dp:task show bd-a1b2                   # View task details
 /dp:task update bd-a1b2 --status in_progress
 /dp:task close bd-a1b2 --reason "Fixed"
+/dp:task discover "Edge case" --from bd-a1b2  # File discovered work
 ```
 
 ### Spec Commands
 
 ```bash
-/dp:spec create 02-auth "Authentication"
+/dp:spec create 02 "Authentication"     # Create spec section
 /dp:spec add 02 "Users MUST authenticate before access"
 /dp:spec coverage                       # Check trace coverage
 /dp:spec list                           # List all specs
@@ -55,7 +56,8 @@ See [references/workflow.md](./references/workflow.md) for detailed phase descri
 ```bash
 /dp:adr create "Use JWT for authentication"
 /dp:adr list                            # List all ADRs
-/dp:adr status                          # Show ADR statuses
+/dp:adr status 0001 accepted            # Update ADR status
+/dp:adr link 0001 SPEC-05.12            # Link ADR to spec/task
 ```
 
 ## Configuration

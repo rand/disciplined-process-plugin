@@ -1,5 +1,5 @@
 ---
-description: Initialize a project with the disciplined development process. Sets up specifications, ADRs, tests, and task tracking with an interactive wizard or from existing config.
+description: Initialize project with wizard
 argument-hint: [--config <path>] [--minimal] [--force]
 ---
 

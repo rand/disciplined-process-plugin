@@ -1,5 +1,5 @@
 ---
-description: Create and manage Architecture Decision Records. Subcommands: create, list, status, link.
+description: Manage Architecture Decision Records
 argument-hint: <create|list|status|link> [options]
 ---
 
