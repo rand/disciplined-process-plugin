@@ -25,6 +25,9 @@ Commands:
   /dp:adr       Architecture Decision Records (create, list, status)
   /dp:review    Run code review checklist
 
+Migration:
+  /dp:migrate   Migrate between task trackers (beads-to-chainlink, chainlink-to-beads)
+
 Diagnostics:
   /dp:health    Show system health and component status
   /dp:status    Show current degradation level
