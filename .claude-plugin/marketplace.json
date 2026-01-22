@@ -9,7 +9,8 @@
     {
       "name": "disciplined-process",
       "source": "./disciplined-process-plugin",
-      "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management"
+      "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management",
+      "version": "2.0.1"
     }
   ]
 }
