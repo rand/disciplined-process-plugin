@@ -12,7 +12,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/pre_commit.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_commit.py",
           "timeout": 120000,
           "blocking": true
         }
@@ -25,7 +25,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/pre_edit.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_edit.py",
           "timeout": 5000,
           "blocking": true
         }
@@ -38,7 +38,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/post_edit.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_edit.py",
           "timeout": 10000,
           "blocking": false
         }
@@ -54,7 +54,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/post_write.py \"$CLAUDE_FILE_PATHS\"",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_write.py \"$CLAUDE_FILE_PATHS\"",
           "timeout": 5000,
           "blocking": false
         }
@@ -66,7 +66,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/session_start.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/session_start.py",
           "timeout": 10000,
           "blocking": false
         }
@@ -79,7 +79,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/pre_push.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_push.py",
           "timeout": 30000,
           "blocking": false
         }
@@ -91,7 +91,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/stop_handler.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/stop_handler.py",
           "timeout": 10000,
           "blocking": false
         }
@@ -103,7 +103,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/prompt_guard.py",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/prompt_guard.py",
           "timeout": 5000,
           "blocking": false
         }
