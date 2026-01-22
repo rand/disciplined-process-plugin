@@ -26,6 +26,18 @@ from .providers import (
     output,
     handle_degradation,
 )
+from .degradation import (
+    DegradationLevel,
+    HealthStatus,
+    SystemState,
+    run_health_checks,
+    get_current_level,
+    is_feature_available,
+    lock_level,
+    unlock_level,
+    reset_to_full,
+    get_status_report,
+)
 
 __all__ = [
     # Config
@@ -48,4 +60,15 @@ __all__ = [
     "error",
     "output",
     "handle_degradation",
+    # Degradation
+    "DegradationLevel",
+    "HealthStatus",
+    "SystemState",
+    "run_health_checks",
+    "get_current_level",
+    "is_feature_available",
+    "lock_level",
+    "unlock_level",
+    "reset_to_full",
+    "get_status_report",
 ]

@@ -3,6 +3,7 @@
 Pre-commit check for disciplined process.
 
 Runs tests and validates spec compliance before allowing commit.
+Respects degradation level for graceful operation.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "lib"))
 
 from lib import DPConfig, EnforcementLevel, get_config
+from lib.degradation import DegradationLevel, get_current_level, is_feature_available
 from lib.providers import error, feedback, get_project_dir
 
 
@@ -162,6 +164,12 @@ def main() -> int:
     """Main entry point."""
     project_dir = get_project_dir()
 
+    # Check degradation level
+    level = get_current_level()
+    if level == DegradationLevel.SAFE:
+        print("⚠️ Safe mode active - skipping pre-commit checks")
+        return 0
+
     try:
         config = get_config()
     except Exception:
@@ -172,6 +180,11 @@ def main() -> int:
 
     # In minimal mode, skip all checks
     if enforcement == EnforcementLevel.MINIMAL:
+        return 0
+
+    # Check if features are available at current degradation level
+    if not is_feature_available("pre_commit_checks"):
+        print("⚠️ Pre-commit checks disabled in current mode")
         return 0
 
     print("🔍 Running pre-commit checks...")
