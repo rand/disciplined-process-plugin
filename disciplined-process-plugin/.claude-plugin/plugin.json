@@ -1,7 +1,7 @@
 {
   "name": "disciplined-process",
   "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management. Inspired by the Rue language development process.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": {
     "name": "Rand Arete",
     "url": "https://github.com/rand"
