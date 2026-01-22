@@ -21,7 +21,8 @@ Commands:
   /dp:init      Initialize project with disciplined process
   /dp:task      Task tracking (ready, create, show, update, close)
   /dp:session   Session management (start, work, status, end) [Chainlink only]
-  /dp:spec      Specification management (create, add, coverage, list)
+  /dp:spec      Specification management (create, add, link, unlink, coverage, list)
+  /dp:trace     Traceability validation (coverage, validate, find)
   /dp:adr       Architecture Decision Records (create, list, status)
   /dp:review    Run code review checklist
 
@@ -115,6 +116,9 @@ Displays the full 7-phase workflow from `references/workflow.md`:
 | Add requirement | `/dp:spec add <section> "<requirement>"` |
 | Create ADR | `/dp:adr create "<title>"` |
 | Check coverage | `/dp:spec coverage` |
+| Link spec to issue | `/dp:spec link SPEC-XX.YY <issue-id>` |
+| Full traceability report | `/dp:trace coverage` |
+| Validate traces | `/dp:trace validate` |
 | Review changes | `/dp:review --staged` |
 | Complete task | `/dp:task close <id> --reason "Done"` |
 | File discovered work | `/dp:task discover "<issue>" --from <id>` |

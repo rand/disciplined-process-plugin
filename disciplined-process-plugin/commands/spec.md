@@ -1,6 +1,6 @@
 ---
 description: Manage specifications with [SPEC-XX.YY] IDs
-argument-hint: <create|add|coverage|list> [options]
+argument-hint: <create|add|link|unlink|coverage|list> [options]
 ---
 
 # Specification Command
@@ -45,6 +45,43 @@ Add a new paragraph to existing spec section.
 ```
 /dp:spec add 03 "Types MUST be resolved before codegen"
 → Added [SPEC-03.07]: Types MUST be resolved before codegen
+```
+
+### link
+Link a specification to an issue for traceability.
+
+```
+/dp:spec link <spec-id> <issue-id>
+```
+
+**Behavior**:
+1. Find the spec paragraph in `docs/spec/`
+2. Add HTML comment with issue reference: `<!-- chainlink:N -->` or `<!-- beads:id -->`
+3. Optionally update issue description with spec reference
+
+**Example**:
+```
+/dp:spec link SPEC-01.03 CL-15
+-> Linked [SPEC-01.03] to CL-15 (Session expiry)
+-> Updated spec file: docs/spec/01-authentication.md
+```
+
+**Spec format after linking**:
+```markdown
+[SPEC-01.03] Session expires after 30 minutes of inactivity <!-- chainlink:15 -->
+```
+
+### unlink
+Remove link between a specification and an issue.
+
+```
+/dp:spec unlink <spec-id>
+```
+
+**Example**:
+```
+/dp:spec unlink SPEC-01.03
+-> Removed link from [SPEC-01.03]
 ```
 
 ### coverage
@@ -114,23 +151,30 @@ Each spec section follows this format:
 
 ```markdown
 # {Section Title}
+[SPEC-{NN}] <!-- chainlink:12 -->
 
 ## Overview
 
-[SPEC-{NN}.01] {Overview statement}.
+[SPEC-{NN}.01] {Overview statement}. <!-- chainlink:13 -->
 
 ## {Subsection}
 
-[SPEC-{NN}.02] {Normative requirement using RFC 2119 keywords}.
+[SPEC-{NN}.02] {Normative requirement using RFC 2119 keywords}. <!-- chainlink:14 -->
 
 > **Informative**: {Rationale or explanation, not tested}
 
-[SPEC-{NN}.03] {Another requirement}.
+[SPEC-{NN}.03] {Another requirement}. <!-- beads:bd-a1b2 -->
 
 ### {Sub-subsection}
 
 [SPEC-{NN}.04] {Detailed requirement}.
 ```
+
+**Note**: The HTML comment `<!-- provider:id -->` links the spec to an issue:
+- `<!-- chainlink:N -->` - Links to Chainlink issue #N
+- `<!-- beads:bd-xxxx -->` - Links to Beads issue bd-xxxx
+
+Unlinked specs (no HTML comment) appear in the coverage report as "not started".
 
 ## RFC 2119 Detection
 
