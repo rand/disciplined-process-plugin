@@ -5,7 +5,7 @@ argument-hint: [--config <path>] [--minimal] [--force]
 
 # Initialize Disciplined Process
 
-This command sets up a project with the disciplined development workflow.
+Interactive setup wizard for the disciplined development workflow.
 
 ## Behavior
 
@@ -16,42 +16,112 @@ This command sets up a project with the disciplined development workflow.
 
 ## Interactive Wizard Flow
 
-Run wizard when no config exists or user requests edits:
-
-### Step 1: Project Basics
 ```
-🔧 Disciplined Process Setup
-
-Project name: {infer from package.json, Cargo.toml, etc., or ask}
-Primary language: {detect or ask: rust, typescript, python, go, zig, other}
++==========================================================================+
+|                   Disciplined Process Plugin Setup                       |
++==========================================================================+
 ```
 
-### Step 2: Task Tracking
+### Step 1: Task Tracker Selection
 ```
-📋 Task Tracking
+1. Task Tracker
+   -------------
+   Which issue tracker would you like to use?
 
-This workflow uses task tracking for work management.
+   [C] Chainlink (recommended)
+       - SQLite-based, rich features
+       - Session management for AI context
+       - Milestones, time tracking
 
-Checking available providers...
-  ✓ Beads (bd CLI found, git initialized)
-  ✗ GitHub Issues (gh CLI not found)
-  ✓ Linear (linear CLI found)
-  ✓ Markdown (always available)
-  ✓ None (skip tracking)
+   [B] Beads
+       - Git-backed, distributed
+       - Multi-machine sync via git
+       - Lightweight
 
-Options:
-  1. Beads (recommended) - Git-backed, dependency-aware
-     Features: ready work, dependencies, discovered-from linking
-  2. GitHub Issues - GitHub issue integration
-     Features: ready work (via labels), milestones
-     ⚠️  Requires: gh CLI (not found - install with 'brew install gh')
-  3. Linear - Linear app integration
-     Features: ready work, native priorities
-  4. Markdown - Plain markdown files in docs/tasks/
-     Features: ready work (manual status)
-  5. None - Skip task tracking
+   [G] GitHub Issues
+       - Native GitHub integration
+       - Team collaboration
 
-Choice [1]:
+   [M] Markdown
+       - Plain files, no dependencies
+
+   [N] None
+       - Skip task tracking
+
+   Selection: C
+```
+
+### Step 2: Migration (if applicable)
+```
+2. Migrating from Beads?
+   ----------------------
+   Detected .beads/ directory with 12 tasks.
+
+   [M] Migrate to Chainlink now
+   [S] Skip (keep both, migrate later)
+   [R] Remove Beads data
+
+   Selection: M
+
+   Migrating...
+   [x] Parsed 12 Beads issues
+   [x] Created 12 Chainlink issues
+   [x] Generated migration map: .claude/dp-migration-map.json
+   [x] Updated spec references
+
+   Migration complete!
+```
+
+### Step 3: Enforcement Level
+```
+3. Enforcement Level
+   ------------------
+   How strictly should the workflow be enforced?
+
+   [S] Strict - Blocks commits that violate process
+       - Require spec references in implementation
+       - Require @trace markers in code
+       - Block edits to protected files
+
+   [G] Guided (recommended) - Warns but allows override
+       - Suggest best practices
+       - Warn about missing traces
+       - No hard blocks
+
+   [M] Minimal - No enforcement, just tooling
+       - Skills available on demand
+       - No hooks or enforcement
+
+   Selection: G
+```
+
+### Step 4: Adversarial Review
+```
+4. Adversarial Review
+   -------------------
+   Enable VDD-style adversarial code review?
+
+   [E] Enabled - Reviews with Gemini before completion
+       - Fresh context per review
+       - Hallucination detection
+       - Iterative improvement loop
+
+   [D] Disabled
+
+   Selection: E
+
+   Adversary model [gemini-2.5-flash]: ↵
+```
+
+### Step 5: Language Detection
+```
+5. Language Detection
+   -------------------
+   Detected languages: Python, TypeScript
+
+   Installing language-specific rules...
+   [x] .claude/rules/python.md
+   [x] .claude/rules/typescript.md
 ```
 
 **CLI Verification**: Before accepting a provider choice, verify the required CLI is available:
@@ -130,32 +200,66 @@ Proceed? [Y/n]:
 `.claude/dp-config.yaml`:
 
 ```yaml
-# Disciplined Process Configuration
-version: "1.0"
+# Disciplined Process Configuration v2
+version: "2.0"
 
 project:
   name: "my-project"
-  language: "typescript"
-  
-tracking:
-  provider: "beads"  # beads | github | linear | markdown | none
-  
-testing:
-  frameworks:
-    unit: "vitest"
-    integration: "vitest"
-    property: "fast-check"
-    e2e: "playwright"
-    
-enforcement:
-  level: "strict"  # strict | guided | minimal
-  
-hooks:
-  pre_commit:
-    - "run_tests"
-    - "check_traces"
-  post_commit:
-    - "sync_tasks"
+  languages:
+    - python
+    - typescript
+
+# Issue tracker selection
+task_tracker: chainlink  # chainlink | beads | github | linear | markdown | none
+
+# Chainlink-specific configuration
+chainlink:
+  features:
+    sessions: true
+    milestones: true
+    time_tracking: true
+  rules_path: .claude/rules/
+
+# Beads-specific configuration (when task_tracker: beads)
+beads:
+  auto_sync: true
+  daemon: true
+
+# Enforcement level
+enforcement: guided  # strict | guided | minimal
+
+# Adversarial review configuration
+adversarial_review:
+  enabled: true
+  model: gemini-2.5-flash
+  max_iterations: 5
+  prompt_path: .claude/adversary-prompt.md
+
+# Spec configuration
+specs:
+  directory: docs/spec/
+  id_format: "SPEC-{section:02d}.{item:02d}"
+  require_issue_link: true  # In strict mode, specs must link to issues
+
+# ADR configuration
+adrs:
+  directory: docs/adr/
+  template: .claude/templates/adr.md
+
+# Traceability configuration
+traceability:
+  code_patterns:
+    - "src/**/*.py"
+    - "src/**/*.ts"
+    - "lib/**/*"
+  test_patterns:
+    - "tests/**/*.py"
+    - "tests/**/*.ts"
+
+# Degradation behavior
+degradation:
+  on_tracker_unavailable: warn  # warn | skip | fail
+  on_hook_failure: warn
 ```
 
 ## Arguments
@@ -183,13 +287,35 @@ After collecting configuration:
 ## Post-Init Output
 
 ```
-✅ Disciplined process initialized!
++==========================================================================+
+|                          Setup Complete!                                 |
++==========================================================================+
+
+Configuration saved to: .claude/dp-config.yaml
+
+Created:
+  [x] .claude/dp-config.yaml      - Plugin configuration
+  [x] .claude/settings.json       - Hook configuration
+  [x] .claude/rules/python.md     - Python best practices
+  [x] .claude/rules/typescript.md - TypeScript best practices
+  [x] docs/spec/00-overview.md    - Specification template
+  [x] docs/adr/template.md        - ADR template
+  [x] docs/adr/0001-adopt-dp.md   - Initial ADR
 
 Next steps:
-  1. Review and customize docs/spec/00-overview.md
-  2. Create your first spec: /dp:spec create 01-core
-  3. Check ready work: /dp:task ready
-  4. Start implementing with test-first approach
+  chainlink session start         # Begin a work session
+  chainlink ready                 # See available tasks
+  /dp:spec create 01 "Core"       # Create first spec
+  /dp:task ready                  # Find work to do
 
-Run '/dp:help' for command reference.
+Workflow reminder:
+  Orient   → /dp:task ready
+  Specify  → /dp:spec add <section> "<requirement>"
+  Decide   → /dp:adr create "<decision>"
+  Test     → Write tests with @trace SPEC-XX.YY
+  Implement→ Code until tests pass
+  Review   → /dp:review [adversarial]
+  Close    → /dp:task close <id>
+
+Run '/dp:help' for full command reference.
 ```
