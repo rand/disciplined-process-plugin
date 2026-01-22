@@ -24,6 +24,13 @@ Commands:
   /dp:adr       Architecture Decision Records (create, list, status)
   /dp:review    Run code review checklist
 
+Diagnostics:
+  /dp:health    Show system health and component status
+  /dp:status    Show current degradation level
+  /dp:repair    Attempt automatic repair of issues
+  /dp:reset     Reset degradation to full mode
+  /dp:unlock    Unlock degradation level
+
 Workflow:
   1. Orient    → /dp:task ready
   2. Specify   → /dp:spec add <section> "<requirement>"
