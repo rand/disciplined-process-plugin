@@ -102,6 +102,60 @@ See [full documentation](./disciplined-process-plugin/README.md) for detailed us
 /plugin update disciplined-process@disciplined-process-plugin
 ```
 
+**Important:** After updating, re-merge hooks to update paths:
+
+```bash
+python3 ~/.claude/scripts/merge-plugin-hooks.py
+```
+
+## Hooks
+
+This plugin uses Claude Code hooks to enforce the disciplined workflow:
+
+| Hook | Event | Purpose |
+|------|-------|---------|
+| `pre-commit-check.sh` | `PreToolUse(git commit)` | Block commits without tests/traces (strict mode) |
+| `check-trace-markers.sh` | `PostToolUse(Write)` | Warn about missing `@trace` markers |
+| `session-start.sh` | `SessionStart` | Show ready work count |
+| `pre-push-sync.sh` | `PreToolUse(git push)` | Sync task tracker before push |
+
+### Hook Setup
+
+Plugin hooks need to be merged into `~/.claude/settings.json`:
+
+```bash
+# After install or update:
+python3 ~/.claude/scripts/merge-plugin-hooks.py
+```
+
+If you don't have the merge script:
+
+```bash
+mkdir -p ~/.claude/scripts
+curl -o ~/.claude/scripts/merge-plugin-hooks.py \
+  https://raw.githubusercontent.com/rand/rlm-claude-code/main/scripts/merge-plugin-hooks.py
+```
+
+### Verifying Hooks
+
+```bash
+# Check hooks are registered
+cat ~/.claude/settings.json | jq '.hooks | keys'
+
+# Should show: PreToolUse, PostToolUse, SessionStart
+```
+
+### Troubleshooting Hooks
+
+**Hooks not running:**
+1. Check enforcement level isn't "minimal" in `dp-config.yaml`
+2. Run `python3 ~/.claude/scripts/merge-plugin-hooks.py`
+3. Restart Claude Code
+
+**Commits not being blocked (strict mode):**
+1. Verify hooks point to current plugin version
+2. Check `~/.claude/settings.json` has `PreToolUse` with `Bash(git commit*)` matcher
+
 ## Uninstalling
 
 ```bash

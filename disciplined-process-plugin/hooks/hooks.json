@@ -12,7 +12,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "scripts/pre-commit-check.sh",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && ./scripts/pre-commit-check.sh",
           "timeout": 60000,
           "blocking": true
         }
@@ -28,7 +28,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && ./scripts/check-trace-markers.sh \"$CLAUDE_FILE_PATHS\"",
           "timeout": 5000,
           "blocking": false
         }
@@ -40,7 +40,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "scripts/session-start.sh",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && ./scripts/session-start.sh",
           "timeout": 10000,
           "blocking": false
         }
@@ -53,7 +53,7 @@
       "hooks": [
         {
           "type": "command",
-          "command": "scripts/pre-push-sync.sh",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && ./scripts/pre-push-sync.sh",
           "timeout": 30000,
           "blocking": false
         }
