@@ -12,7 +12,7 @@ Unified interface for task tracking, routing to the configured provider.
 Reads from `.claude/dp-config.yaml`:
 ```yaml
 tracking:
-  provider: "beads"  # beads | github | linear | markdown | none
+  provider: "chainlink"  # chainlink | beads | github | linear | markdown | none
 ```
 
 ## Subcommands
@@ -27,6 +27,7 @@ Show tasks ready for work (no blockers).
 ```
 
 **Provider mapping**:
+- Chainlink: `chainlink ready`
 - Beads: `bd ready --json`
 - GitHub: `gh issue list --label ready`
 - Linear: `linear issue list --state started`
@@ -142,26 +143,36 @@ Create a discovered task linked to current work.
 
 Not all features work with all providers. Choose based on your needs:
 
-| Feature | Beads | GitHub | Linear | Markdown | None |
-|---------|:-----:|:------:|:------:|:--------:|:----:|
-| `ready` - find available work | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `create` - create tasks | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `show` - view details | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `update` - change status | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `close` - complete tasks | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `discover` - linked discovery | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
-| Dependency blocking | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Auto-sync with remote | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Offline support | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Feature | Chainlink | Beads | GitHub | Linear | Markdown | None |
+|---------|:---------:|:-----:|:------:|:------:|:--------:|:----:|
+| `ready` - find available work | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `create` - create tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `show` - view details | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `update` - change status | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `close` - complete tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `discover` - linked discovery | ✅ | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Dependency blocking | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Auto-sync with remote | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Offline support | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Session tracking | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Time tracking | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Hierarchical tree view | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 **Legend**: ✅ Full support | ⚠️ Partial (creates task, no dependency link) | ❌ Not supported
 
 ## Provider Details
 
-### Beads (recommended)
+### Chainlink (recommended)
+- **CLI**: `chainlink` (install: `cargo install chainlink` or build from source)
+- **Requires**: None (local markdown storage)
+- **Strengths**: Full dependency tracking, session/time tracking, hierarchical tree view, works offline
+- **Limitations**: No remote sync (use git for collaboration)
+- **Extra commands**: `tree`, `next`, `session`, `blocked`, `timer`
+
+### Beads
 - **CLI**: `bd` (install: see beads documentation)
 - **Requires**: Git repository
-- **Strengths**: Full dependency tracking, discovered-from linking, git-native, works offline
+- **Strengths**: Full dependency tracking, discovered-from linking, git-native sync, works offline
 - **Limitations**: Requires beads CLI installation
 
 ### GitHub Issues
@@ -186,6 +197,60 @@ Not all features work with all providers. Choose based on your needs:
 - Disables task tracking entirely
 - All `/dp:task` commands print a reminder
 - Use when task tracking is handled externally
+
+## Chainlink-Specific Commands
+
+These commands are only available when using Chainlink as your provider.
+
+### tree
+Show issues as a hierarchical tree.
+
+```
+/dp:task tree
+```
+
+**Output**:
+```
+Issues Tree
+├── [CL-001] Project setup
+│   ├── [CL-002] Configure build system
+│   └── [CL-003] Setup testing framework
+└── [CL-004] Implement feature X
+    └── [CL-005] Write tests for X
+```
+
+### next
+Suggest the next issue to work on based on priority and dependencies.
+
+```
+/dp:task next
+```
+
+### session
+Manage work sessions for time tracking.
+
+```
+/dp:task session start    # Start a new session
+/dp:task session end      # End current session
+/dp:task session status   # Show current session
+/dp:task session work <id> # Set active issue
+```
+
+### timer
+Track time spent on issues.
+
+```
+/dp:task timer start <id>  # Start timer for issue
+/dp:task timer stop        # Stop current timer
+/dp:task timer status      # Show timer status
+```
+
+### blocked
+Show all blocked issues and what's blocking them.
+
+```
+/dp:task blocked
+```
 
 ## Graceful Degradation
 

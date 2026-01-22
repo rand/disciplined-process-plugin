@@ -66,7 +66,11 @@ def check_provider_available(tracker: TaskTracker, project_dir: Path | None = No
             return ProviderStatus(True)
 
         case TaskTracker.CHAINLINK:
-            # Chainlink uses local markdown files, always available
+            if not check_cli_available("chainlink"):
+                return ProviderStatus(False, "'chainlink' CLI not found. Install with 'cargo install chainlink' or change provider.")
+            chainlink_dir = project_dir / ".chainlink"
+            if not chainlink_dir.is_dir():
+                return ProviderStatus(False, ".chainlink/ not initialized. Run 'chainlink init' in project root.")
             return ProviderStatus(True)
 
         case TaskTracker.GITHUB:
@@ -171,9 +175,20 @@ def get_ready_count(tracker: TaskTracker, project_dir: Path | None = None) -> in
                 return count
 
             case TaskTracker.CHAINLINK:
-                # Chainlink uses beads under the hood if available
-                if check_cli_available("bd") and (project_dir / ".beads").is_dir():
-                    return get_ready_count(TaskTracker.BEADS, project_dir)
+                if not check_cli_available("chainlink"):
+                    return None
+                # chainlink ready outputs one issue per line
+                result = subprocess.run(
+                    ["chainlink", "ready"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    cwd=project_dir,
+                )
+                if result.returncode == 0:
+                    # Count non-empty lines
+                    lines = [l for l in result.stdout.strip().split("\n") if l.strip()]
+                    return len(lines)
                 return None
 
             case TaskTracker.NONE:
@@ -197,7 +212,7 @@ def sync_tracker(tracker: TaskTracker, project_dir: Path | None = None) -> bool:
 
     try:
         match tracker:
-            case TaskTracker.BEADS | TaskTracker.CHAINLINK:
+            case TaskTracker.BEADS:
                 if check_cli_available("bd") and (project_dir / ".beads").is_dir():
                     result = subprocess.run(
                         ["bd", "sync"],
@@ -207,6 +222,11 @@ def sync_tracker(tracker: TaskTracker, project_dir: Path | None = None) -> bool:
                     )
                     return result.returncode == 0
                 return True  # No sync needed if bd not available
+
+            case TaskTracker.CHAINLINK:
+                # Chainlink stores locally, no remote sync
+                # Use git for collaboration
+                return True
 
             case TaskTracker.GITHUB | TaskTracker.LINEAR:
                 # These sync automatically via their CLIs
