@@ -14,8 +14,21 @@ from .config import (
     reload_config,
     migrate_v1_to_v2,
 )
+from .providers import (
+    ProviderStatus,
+    check_cli_available,
+    check_provider_available,
+    get_project_dir,
+    get_ready_count,
+    sync_tracker,
+    feedback,
+    error,
+    output,
+    handle_degradation,
+)
 
 __all__ = [
+    # Config
     "DPConfig",
     "ConfigVersion",
     "EnforcementLevel",
@@ -24,4 +37,15 @@ __all__ = [
     "get_config",
     "reload_config",
     "migrate_v1_to_v2",
+    # Providers
+    "ProviderStatus",
+    "check_cli_available",
+    "check_provider_available",
+    "get_project_dir",
+    "get_ready_count",
+    "sync_tracker",
+    "feedback",
+    "error",
+    "output",
+    "handle_degradation",
 ]
