@@ -21,6 +21,7 @@ from lib.degradation import (
     run_health_checks,
 )
 from lib.providers import (
+    check_cli_available,
     check_provider_available,
     feedback,
     get_project_dir,
@@ -29,6 +30,7 @@ from lib.providers import (
     mark_provider_warned,
     should_warn_about_provider,
 )
+import subprocess
 
 
 def run_startup_health_check() -> DegradationLevel:
@@ -55,6 +57,41 @@ def show_degradation_status(level: DegradationLevel) -> None:
     message = level_messages.get(level)
     if message:
         feedback(message)
+
+
+def show_chainlink_session_context(config: DPConfig, project_dir: Path) -> None:
+    """Show Chainlink session context if available."""
+    if config.task_tracker != TaskTracker.CHAINLINK:
+        return
+
+    if not check_cli_available("chainlink"):
+        return
+
+    chainlink_dir = project_dir / ".chainlink"
+    if not chainlink_dir.is_dir():
+        return
+
+    try:
+        # Get session status
+        result = subprocess.run(
+            ["chainlink", "session", "status"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            cwd=project_dir,
+        )
+
+        if result.returncode == 0 and result.stdout.strip():
+            output = result.stdout.strip()
+            # Check if there's an active session or handoff notes
+            if "No active session" not in output:
+                feedback(f"📝 Active session:\n{output}")
+            elif "Handoff notes" in output or "Previous session" in output:
+                # Show handoff notes from previous session
+                feedback(f"📝 Previous session context:\n{output}")
+                feedback("Start new session with: /dp:session start")
+    except (subprocess.TimeoutExpired, OSError):
+        pass  # Fail silently - session info is nice-to-have
 
 
 def show_ready_work(config: DPConfig, level: DegradationLevel) -> None:
@@ -100,8 +137,14 @@ def main() -> int:
         # Show degradation status if not full
         show_degradation_status(level)
 
-        # Load config and show ready work
+        # Load config
         config = get_config()
+        project_dir = get_project_dir()
+
+        # Show Chainlink session context if available
+        show_chainlink_session_context(config, project_dir)
+
+        # Show ready work
         show_ready_work(config, level)
 
         return 0

@@ -20,6 +20,7 @@ A rigorous, traceable development workflow.
 Commands:
   /dp:init      Initialize project with disciplined process
   /dp:task      Task tracking (ready, create, show, update, close)
+  /dp:session   Session management (start, work, status, end) [Chainlink only]
   /dp:spec      Specification management (create, add, coverage, list)
   /dp:adr       Architecture Decision Records (create, list, status)
   /dp:review    Run code review checklist
@@ -114,3 +115,6 @@ Displays the full 7-phase workflow from `references/workflow.md`:
 | Review changes | `/dp:review --staged` |
 | Complete task | `/dp:task close <id> --reason "Done"` |
 | File discovered work | `/dp:task discover "<issue>" --from <id>` |
+| Start session | `/dp:session start` (Chainlink only) |
+| Set working issue | `/dp:session work <id>` (Chainlink only) |
+| End session | `/dp:session end --notes "..."` (Chainlink only) |
