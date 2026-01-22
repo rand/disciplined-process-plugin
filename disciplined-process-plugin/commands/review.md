@@ -1,11 +1,16 @@
 ---
 description: Run code review checklist
-argument-hint: [--staged] [--full] [--json]
+argument-hint: [adversarial] [--staged] [--full] [--json]
 ---
 
 # Code Review Command
 
 Run a structured code review against current changes.
+
+## Modes
+
+- **Standard** (default): Checklist-based review by Claude
+- **Adversarial**: VDD-style review using Gemini with fresh context
 
 ## Behavior
 
@@ -143,7 +148,7 @@ In strict enforcement mode, this review runs automatically as a pre-commit hook:
   ],
   "non_blocking": [
     {
-      "file": "src/auth.ts", 
+      "file": "src/auth.ts",
       "line": 67,
       "category": "PERFORMANCE",
       "message": "Consider caching user lookup",
@@ -160,3 +165,105 @@ In strict enforcement mode, this review runs automatically as a pre-commit hook:
   }
 }
 ```
+
+---
+
+## Adversarial Review Mode
+
+VDD-style (Verification-Driven Development) review using a fresh-context adversary.
+
+```
+/dp:review adversarial [--max-iterations N]
+```
+
+### How It Works
+
+1. **Gather Context**: Collects diff, linked specs, test coverage
+2. **Invoke Adversary**: Calls Gemini via rlm-claude-code with fresh context
+3. **Present Critique**: Shows issues with Accept/Reject/Done options
+4. **Iterate**: Loop continues until convergence
+
+### Workflow
+
+```
+================================================================
+Adversary Critique (Iteration 1)
+================================================================
+
+1. [LOGIC] auth.py:45
+   Function validate_user returns early on line 45 without
+   checking the is_active flag, allowing deactivated users
+   through authentication.
+
+2. [EDGE CASE] auth.py:52
+   No handling for empty email string - will cause IndexError
+   in email.split('@') on line 52.
+
+3. [SECURITY] auth.py:78
+   Password comparison uses == instead of constant-time
+   comparison, vulnerable to timing attacks.
+
+----------------------------------------------------------------
+Options:
+[A]ccept all and address
+[P]artially accept (select which)
+[R]eject as hallucinated
+[D]one (code is complete)
+----------------------------------------------------------------
+```
+
+### Response Options
+
+| Option | Action |
+|--------|--------|
+| **Accept (A)** | Builder addresses all issues, then loop repeats |
+| **Partial (P)** | Select specific issues to address, reject others |
+| **Reject (R)** | Log critique as hallucinated, continue to next iteration |
+| **Done (D)** | Exit loop, code is considered complete |
+
+### Hallucination Detection
+
+The system automatically flags suspicious critiques:
+
+```
+[!] POTENTIAL HALLUCINATION DETECTED
+    Critique #3 references `password_hash` on line 78,
+    but line 78 contains: `return user.is_authenticated`
+
+    The function `compare_password` doesn't exist in auth.py.
+
+    Consider rejecting this critique.
+```
+
+Detection triggers:
+- Line numbers don't exist in file
+- Referenced functions/variables not found
+- File paths don't match modified files
+- Critique contradicts visible code structure
+
+### Convergence Criteria
+
+The loop terminates when:
+
+1. **Adversary returns "No issues found"** - Code is complete
+2. **Human selects "Done"** - Manual termination
+3. **Max iterations reached** - Default: 5 (configurable)
+4. **All critiques rejected** - Adversary has lost grounding
+
+### Configuration
+
+In `dp-config.yaml`:
+
+```yaml
+adversarial_review:
+  enabled: true
+  model: gemini-2.5-flash
+  max_iterations: 5
+  prompt_path: .claude/adversary-prompt.md  # Optional custom prompt
+```
+
+### Requirements
+
+- rlm-claude-code installed and configured
+- `GOOGLE_API_KEY` set for Gemini access
+- `adversarial_review.enabled: true` in dp-config.yaml
