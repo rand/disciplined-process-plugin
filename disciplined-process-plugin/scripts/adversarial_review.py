@@ -88,11 +88,71 @@ def gather_context(project_dir: Path, staged_only: bool = False) -> ReviewContex
     diff = get_git_diff(project_dir, staged_only)
     files_changed = get_changed_files(project_dir, staged_only)
 
-    # TODO: Extract linked specs from changed files
+    # Extract linked specs from changed files
     specs: dict[str, str] = {}
+    try:
+        from traceability import find_trace_markers, parse_all_specs
 
-    # TODO: Find tests for changed files
+        # Find all specs in the project
+        spec_dir = project_dir / "docs" / "spec"
+        all_specs = parse_all_specs(spec_dir)
+        spec_map = {s.spec_id: s for s in all_specs}
+
+        # Find trace markers in changed files
+        changed_paths = [project_dir / f for f in files_changed if f.endswith(('.py', '.ts', '.tsx', '.js', '.go', '.rs'))]
+        if changed_paths:
+            # Create temp list of parent directories for changed files
+            search_dirs = list(set(p.parent for p in changed_paths if p.exists()))
+            if search_dirs:
+                markers = find_trace_markers(search_dirs)
+                # Extract unique spec IDs referenced in changed files
+                changed_spec_ids = set()
+                for marker in markers:
+                    # Check if the marker's file is in our changed files
+                    try:
+                        rel_path = str(marker.file_path.relative_to(project_dir))
+                        if rel_path in files_changed:
+                            # Get the base spec ID (SPEC-XX.YY without sub-items)
+                            base_id = ".".join(marker.spec_id.split(".")[:2])
+                            if base_id.startswith("SPEC-"):
+                                changed_spec_ids.add(base_id)
+                    except ValueError:
+                        continue
+
+                # Get spec content for referenced specs
+                for spec_id in changed_spec_ids:
+                    if spec_id in spec_map:
+                        spec = spec_map[spec_id]
+                        specs[spec_id] = spec.title
+    except ImportError:
+        pass  # Gracefully degrade if traceability not available
+
+    # Find tests for changed files
     tests: dict[str, str] = {}
+    try:
+        tests_dir = project_dir / "tests"
+        if tests_dir.is_dir():
+            for changed_file in files_changed:
+                # Look for corresponding test file
+                base_name = Path(changed_file).stem
+                possible_test_names = [
+                    f"test_{base_name}.py",
+                    f"{base_name}_test.py",
+                    f"test_{base_name}.ts",
+                    f"{base_name}.test.ts",
+                    f"{base_name}.test.tsx",
+                ]
+                for test_name in possible_test_names:
+                    for test_file in tests_dir.rglob(test_name):
+                        try:
+                            content = test_file.read_text()
+                            rel_path = str(test_file.relative_to(project_dir))
+                            # Limit content size
+                            tests[rel_path] = content[:2000]
+                        except (OSError, UnicodeDecodeError):
+                            continue
+    except Exception:
+        pass  # Gracefully degrade
 
     return ReviewContext(
         diff=diff,

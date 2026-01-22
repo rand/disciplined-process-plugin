@@ -19,6 +19,32 @@
       ]
     },
     {
+      "event": "PreToolUse",
+      "matcher": "Edit(*)|Write(*)|MultiEdit(*)",
+      "description": "Block protected files and enforce spec-first workflow",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/pre_edit.py",
+          "timeout": 5000,
+          "blocking": true
+        }
+      ]
+    },
+    {
+      "event": "PostToolUse",
+      "matcher": "Edit(*.py)|Edit(*.ts)|Edit(*.tsx)|Edit(*.js)|Edit(*.jsx)|Edit(*.go)|Edit(*.rs)",
+      "description": "Run formatters and update traceability on edits",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/post_edit.py",
+          "timeout": 10000,
+          "blocking": false
+        }
+      ]
+    },
+    {
       "event": "PostToolUse",
       "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.py)|Write(*.rs)|Write(*.go)|Write(*.zig)",
       "description": "Check for spec trace markers in implementation files",
@@ -36,7 +62,7 @@
     },
     {
       "event": "SessionStart",
-      "description": "Remind about ready work at session start",
+      "description": "Check health and remind about ready work at session start",
       "hooks": [
         {
           "type": "command",
@@ -55,6 +81,30 @@
           "type": "command",
           "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/pre_push.py",
           "timeout": 30000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "Stop",
+      "description": "Handle session end, check for uncommitted work",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/stop_handler.py",
+          "timeout": 10000,
+          "blocking": false
+        }
+      ]
+    },
+    {
+      "event": "UserPromptSubmit",
+      "description": "Validate spec references and inject language rules",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && python3 scripts/prompt_guard.py",
+          "timeout": 5000,
           "blocking": false
         }
       ]

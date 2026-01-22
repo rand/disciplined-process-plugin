@@ -348,7 +348,7 @@ def format_coverage_report(coverage: list[TraceCoverage], project_dir: Path) -> 
             if cov.issue_status == "closed" and cov.test_count > 0:
                 indicator = "[x]"
                 covered_specs += 1
-            elif cov.issue_link:
+            elif cov.spec.issue_link:
                 indicator = "[!]"
             else:
                 indicator = "[ ]"
@@ -378,8 +378,8 @@ def format_coverage_report(coverage: list[TraceCoverage], project_dir: Path) -> 
         lines.append("")
 
     # Summary
-    in_progress = sum(1 for c in coverage if c.issue_link and c.issue_status != "closed")
-    not_started = sum(1 for c in coverage if not c.issue_link)
+    in_progress = sum(1 for c in coverage if c.spec.issue_link and c.issue_status != "closed")
+    not_started = sum(1 for c in coverage if not c.spec.issue_link)
 
     lines.append(
         f"Summary: {covered_specs}/{total_specs} specs fully covered, "
