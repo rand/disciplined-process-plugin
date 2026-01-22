@@ -1,113 +1,109 @@
 {
   "$schema": "https://claude.ai/schemas/hooks.json",
   "description": "Disciplined process hooks for workflow enforcement",
-  "hooks": [
-    {
-      "event": "PreToolUse",
-      "matcher": "Bash(git commit*)",
-      "description": "Enforce tests pass before commit (strict mode)",
-      "config": {
-        "enforcement": "strict"
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit*)",
+        "description": "Enforce tests pass before commit (strict mode)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_commit.py",
+            "timeout": 120000,
+            "blocking": true
+          }
+        ]
       },
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_commit.py",
-          "timeout": 120000,
-          "blocking": true
-        }
-      ]
-    },
-    {
-      "event": "PreToolUse",
-      "matcher": "Edit(*)|Write(*)|MultiEdit(*)",
-      "description": "Block protected files and enforce spec-first workflow",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_edit.py",
-          "timeout": 5000,
-          "blocking": true
-        }
-      ]
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Edit(*.py)|Edit(*.ts)|Edit(*.tsx)|Edit(*.js)|Edit(*.jsx)|Edit(*.go)|Edit(*.rs)",
-      "description": "Run formatters and update traceability on edits",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_edit.py",
-          "timeout": 10000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "PostToolUse",
-      "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.py)|Write(*.rs)|Write(*.go)|Write(*.zig)",
-      "description": "Check for spec trace markers in implementation files",
-      "config": {
-        "enforcement": "guided"
+      {
+        "matcher": "Edit(*)|Write(*)|MultiEdit(*)",
+        "description": "Block protected files and enforce spec-first workflow",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_edit.py",
+            "timeout": 5000,
+            "blocking": true
+          }
+        ]
       },
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_write.py \"$CLAUDE_FILE_PATHS\"",
-          "timeout": 5000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "SessionStart",
-      "description": "Check health and remind about ready work at session start",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/session_start.py",
-          "timeout": 10000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "PreToolUse",
-      "matcher": "Bash(git push*)",
-      "description": "Sync task tracker before push",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_push.py",
-          "timeout": 30000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "Stop",
-      "description": "Handle session end, check for uncommitted work",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/stop_handler.py",
-          "timeout": 10000,
-          "blocking": false
-        }
-      ]
-    },
-    {
-      "event": "UserPromptSubmit",
-      "description": "Validate spec references and inject language rules",
-      "hooks": [
-        {
-          "type": "command",
-          "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/prompt_guard.py",
-          "timeout": 5000,
-          "blocking": false
-        }
-      ]
-    }
-  ]
+      {
+        "matcher": "Bash(git push*)",
+        "description": "Sync task tracker before push",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_push.py",
+            "timeout": 30000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit(*.py)|Edit(*.ts)|Edit(*.tsx)|Edit(*.js)|Edit(*.jsx)|Edit(*.go)|Edit(*.rs)",
+        "description": "Run formatters and update traceability on edits",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_edit.py",
+            "timeout": 10000,
+            "blocking": false
+          }
+        ]
+      },
+      {
+        "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.py)|Write(*.rs)|Write(*.go)|Write(*.zig)",
+        "description": "Check for spec trace markers in implementation files",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_write.py \"$CLAUDE_FILE_PATHS\"",
+            "timeout": 5000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "description": "Check health and remind about ready work at session start",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/session_start.py",
+            "timeout": 10000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "description": "Handle session end, check for uncommitted work",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/stop_handler.py",
+            "timeout": 10000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "description": "Validate spec references and inject language rules",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/prompt_guard.py",
+            "timeout": 5000,
+            "blocking": false
+          }
+        ]
+      }
+    ]
+  }
 }
