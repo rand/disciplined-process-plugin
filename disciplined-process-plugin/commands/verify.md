@@ -113,18 +113,26 @@ Files are flagged as stubs if they contain:
 
 ## @must_have Annotations
 
-Add explicit verification criteria to task descriptions:
+Add explicit verification criteria to task descriptions or specs:
 
 ```markdown
-Implement user authentication
+[SPEC-03.01] Users SHALL be able to send messages
 
 @must_have:
-  truth: User can log in with email and password
-  truth: User sees error for invalid credentials
-  artifact: src/auth/login.ts
-  artifact: src/auth/errors.ts
-  link: login.ts -> api/auth
+  truth: User can send a message and see it appear
+  truth: Message is persisted to database
+  artifact: src/components/MessageInput.tsx
+  artifact: src/api/messages.ts
+  link: MessageInput -> api/messages
+  link: api/messages -> database.messages
 ```
+
+**Fields:**
+- `truth:` - Observable behavior that must be true
+- `artifact:` - File path that must exist with substantive implementation
+- `link:` - Connection between components (format: `from -> to`)
+
+Works in both task descriptions and spec definitions.
 
 ## Integration
 

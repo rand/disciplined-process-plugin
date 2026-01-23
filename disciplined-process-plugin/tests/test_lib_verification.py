@@ -22,6 +22,8 @@ from lib.verification import (
     LinkResult,
     VerificationResult,
     extract_truths_from_description,
+    extract_must_have_artifacts,
+    extract_must_have_links,
     check_artifact_exists,
     check_artifact_substance,
     detect_stub,
@@ -77,6 +79,42 @@ class TestExtractTruths:
         description = "Just a simple task with no criteria."
         truths = extract_truths_from_description(description)
         assert truths == []
+
+
+# @trace SPEC-05.85, SPEC-05.86
+class TestMustHaveExtraction:
+    """Tests for @must_have annotation parsing."""
+
+    def test_extracts_artifacts(self):
+        """Should extract artifact paths from @must_have."""
+        description = dedent("""
+            @must_have:
+              artifact: src/components/Chat.tsx
+              artifact: src/api/messages.ts
+        """)
+        artifacts = extract_must_have_artifacts(description)
+        assert len(artifacts) == 2
+        assert "src/components/Chat.tsx" in artifacts
+        assert "src/api/messages.ts" in artifacts
+
+    def test_extracts_links(self):
+        """Should extract link definitions from @must_have."""
+        description = dedent("""
+            @must_have:
+              link: MessageInput -> api/messages
+              link: api/messages -> database
+        """)
+        links = extract_must_have_links(description)
+        assert len(links) == 2
+        assert ("MessageInput", "api/messages") in links
+        assert ("api/messages", "database") in links
+
+    def test_handles_empty_description(self):
+        """Should return empty for no must-haves."""
+        artifacts = extract_must_have_artifacts("No must-haves here")
+        links = extract_must_have_links("No must-haves here")
+        assert artifacts == []
+        assert links == []
 
 
 # @trace SPEC-05.20, SPEC-05.21

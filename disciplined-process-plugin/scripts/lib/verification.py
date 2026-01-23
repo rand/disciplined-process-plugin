@@ -127,6 +127,39 @@ def extract_truths_from_description(description: str) -> list[str]:
     return truths
 
 
+# @trace SPEC-05.85, SPEC-05.86
+def extract_must_have_artifacts(description: str) -> list[str]:
+    """
+    Extract artifact paths from @must_have annotations.
+
+    Looks for: artifact: <path>
+    """
+    artifacts = re.findall(
+        r"artifact:\s*(.+?)(?:\n|$)",
+        description,
+        re.IGNORECASE,
+    )
+    return [a.strip() for a in artifacts if a.strip()]
+
+
+# @trace SPEC-05.85, SPEC-05.86
+def extract_must_have_links(description: str) -> list[tuple[str, str]]:
+    """
+    Extract key links from @must_have annotations.
+
+    Looks for: link: from -> to
+    """
+    links: list[tuple[str, str]] = []
+    link_matches = re.findall(
+        r"link:\s*(.+?)\s*->\s*(.+?)(?:\n|$)",
+        description,
+        re.IGNORECASE,
+    )
+    for from_part, to_part in link_matches:
+        links.append((from_part.strip(), to_part.strip()))
+    return links
+
+
 # @trace SPEC-05.20
 def check_artifact_exists(path: Path) -> ArtifactResult:
     """Check if an artifact file exists."""
@@ -376,8 +409,10 @@ def verify_task(
         # Future: could attempt automated verification for some patterns
         truths.append(TruthResult(description=truth_str, status="?"))
 
-    # Extract artifacts from description
+    # Extract artifacts from description (bullet list format)
     artifact_results: list[ArtifactResult] = []
+    artifact_paths: set[str] = set()
+
     artifact_pattern = re.compile(r"Artifacts?:\s*\n((?:\s*[-*]\s*.+\n?)+)", re.IGNORECASE)
     artifact_match = artifact_pattern.search(description)
 
@@ -388,9 +423,18 @@ def verify_task(
             if line.startswith(("-", "*")):
                 artifact_path = line.lstrip("-* ").strip()
                 if artifact_path:
-                    full_path = project_root / artifact_path
-                    result = check_artifact_substance(full_path)
-                    artifact_results.append(result)
+                    artifact_paths.add(artifact_path)
+
+    # Extract artifacts from @must_have annotations
+    # @trace SPEC-05.87
+    must_have_artifacts = extract_must_have_artifacts(description)
+    artifact_paths.update(must_have_artifacts)
+
+    # Check all artifacts
+    for artifact_path in artifact_paths:
+        full_path = project_root / artifact_path
+        result = check_artifact_substance(full_path)
+        artifact_results.append(result)
 
     # Determine overall status
     # @trace SPEC-05.60

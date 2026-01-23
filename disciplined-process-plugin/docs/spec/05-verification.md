@@ -135,6 +135,29 @@ Status: <VERIFIED | INCOMPLETE | FAILED>
 
 [SPEC-05.72] The `/dp:review` command MAY invoke verification as part of its checklist when `--verify` flag is passed.
 
+## Must-Have Annotations
+
+[SPEC-05.85] Specs MAY include explicit must-have annotations for verification:
+
+```markdown
+[SPEC-03.01] Users SHALL be able to send messages
+
+@must_have:
+  truth: User can send a message and see it appear
+  truth: Message is persisted to database
+  artifact: src/components/MessageInput.tsx
+  artifact: src/api/messages.ts
+  link: MessageInput -> api/messages
+  link: api/messages -> database.messages
+```
+
+[SPEC-05.86] Must-have fields:
+- `truth:` - Observable behavior that must be true
+- `artifact:` - File path that must exist with substance
+- `link:` - Connection between components (format: `from -> to`)
+
+[SPEC-05.87] The verification system SHALL parse must-haves and include them in verification checks.
+
 ## Configuration
 
 [SPEC-05.80] Verification behavior SHALL be configurable in `dp-config.yaml`:
