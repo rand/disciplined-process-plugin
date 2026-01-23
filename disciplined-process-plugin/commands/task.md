@@ -121,22 +121,52 @@ Close a completed task.
 ```
 
 ### discover
-Create a discovered task linked to current work.
+Create a discovered task linked to current work, with optional deviation classification.
 
 ```
-/dp:task discover "<title>" [--from <parent-id>] [-p priority]
+/dp:task discover "<title>" [--from <parent-id>] [-p priority] [--type <deviation-type>]
 ```
+
+**Arguments**:
+- `--from`: Parent task ID (links as `discovered-from`)
+- `-p, --priority`: 0-4, 0=highest (default: 2)
+- `--type, -t`: Deviation classification (see below)
+
+**Deviation Types** (GSD-inspired):
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `bug` | Bug found during implementation | "Found null pointer in edge case" |
+| `scope-creep` | Work outside original scope | "Also need to update admin panel" |
+| `dependency` | Missing prerequisite discovered | "Need database migration first" |
+| `blocked` | External blocker found | "Waiting on API key from vendor" |
+| `refactor` | Technical debt discovered | "Should extract shared utility" |
+| `edge-case` | Edge case not in original spec | "Handle empty input array" |
 
 **Behavior**:
-1. Create new task
+1. Create new task with deviation label
 2. Link with `discovered-from` dependency to parent
 3. Inherit labels/context from parent
+4. Add `deviation:<type>` label for tracking
 
-**Example**:
+**Examples**:
 ```
-/dp:task discover "Edge case: empty input" --from bd-a1b2 -p 2
+/dp:task discover "Edge case: empty input" --from bd-a1b2 --type edge-case
 → Created bd-3e7a: Edge case: empty input
 → Linked: discovered-from bd-a1b2
+→ Labels: deviation:edge-case
+
+/dp:task discover "Need auth refactor first" --from bd-a1b2 --type dependency -p 1
+→ Created bd-4f8b: Need auth refactor first
+→ Linked: discovered-from bd-a1b2
+→ Labels: deviation:dependency
+```
+
+**Tracking Deviations**:
+Query discovered work by type for retrospectives:
+```
+bd list --labels=deviation:bug        # Find all bugs discovered during work
+bd list --labels=deviation:scope-creep # Find scope creep patterns
 ```
 
 ## Provider Feature Matrix
