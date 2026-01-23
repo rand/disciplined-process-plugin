@@ -91,6 +91,12 @@ ADRs are in `docs/adr/`:
 
 This project uses **{provider}** for task tracking.
 
+{if provider == "builtin"}
+> **Note**: Tasks are stored in `~/.claude/tasks/` and managed via Claude Code's
+> native TaskCreate/TaskUpdate tools. The `CLAUDE_CODE_TASK_LIST_ID` env var
+> is auto-set to isolate tasks per project.
+{endif}
+
 ```bash
 # See ready work
 /dp:task ready
@@ -104,6 +110,14 @@ This project uses **{provider}** for task tracking.
 # Complete work
 /dp:task close <id> --reason "Implemented per SPEC-XX.YY"
 ```
+
+### Provider Selection Guide
+
+| Provider | Best For |
+|----------|----------|
+| **Beads** (recommended) | Team projects, git-tracked work, full features |
+| **Builtin** | Quick projects, zero-config, single-developer |
+| **Chainlink** | Power users with source access, session tracking |
 
 ---
 

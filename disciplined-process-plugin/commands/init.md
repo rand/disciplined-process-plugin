@@ -28,15 +28,19 @@ Interactive setup wizard for the disciplined development workflow.
    -------------
    Which issue tracker would you like to use?
 
-   [C] Chainlink (recommended)
-       - SQLite-based, rich features
-       - Session management for AI context
-       - Milestones, time tracking
-
-   [B] Beads
-       - Git-backed, distributed
+   [B] Beads (recommended)
+       - Git-native, dependencies tracked
        - Multi-machine sync via git
-       - Lightweight
+       - MCP server integration
+
+   [U] Builtin (Claude Code Native)
+       - Zero setup required
+       - Uses ~/.claude/tasks/
+       - Project-isolated, dependencies supported
+
+   [C] Chainlink
+       - Session/time tracking, tree view
+       - Not publicly available (requires source access)
 
    [G] GitHub Issues
        - Native GitHub integration
@@ -48,7 +52,7 @@ Interactive setup wizard for the disciplined development workflow.
    [N] None
        - Skip task tracking
 
-   Selection: C
+   Selection: B
 ```
 
 ### Step 2: Migration (if applicable)
@@ -126,6 +130,8 @@ Interactive setup wizard for the disciplined development workflow.
 
 **CLI Verification**: Before accepting a provider choice, verify the required CLI is available:
 - **Beads**: Check `command -v bd` and `git rev-parse --git-dir`
+- **Builtin**: Always available (no CLI required)
+- **Chainlink**: Check `command -v chainlink` (note: not publicly available)
 - **GitHub**: Check `command -v gh` and `gh auth status`
 - **Linear**: Check `command -v linear`
 
@@ -210,20 +216,27 @@ project:
     - typescript
 
 # Issue tracker selection
-task_tracker: chainlink  # chainlink | beads | github | linear | markdown | none
+task_tracker: beads  # beads | builtin | chainlink | github | linear | markdown | none
 
-# Chainlink-specific configuration
+# Beads-specific configuration (when task_tracker: beads)
+beads:
+  auto_sync: true
+  daemon: true
+  prefix: null
+
+# Builtin-specific configuration (when task_tracker: builtin)
+# Uses Claude Code's native task system (~/.claude/tasks/)
+builtin:
+  task_list_id: null  # Auto-generated from project path if null
+  auto_set_env: true  # Auto-set CLAUDE_CODE_TASK_LIST_ID env var
+
+# Chainlink-specific configuration (requires private source access)
 chainlink:
   features:
     sessions: true
     milestones: true
     time_tracking: true
   rules_path: .claude/rules/
-
-# Beads-specific configuration (when task_tracker: beads)
-beads:
-  auto_sync: true
-  daemon: true
 
 # Enforcement level
 enforcement: guided  # strict | guided | minimal

@@ -8,7 +8,7 @@ project:
   language: "{language}"  # rust, typescript, python, go, zig, other
 
 # Issue tracker selection
-task_tracker: chainlink  # chainlink | beads | github | linear | markdown | none
+task_tracker: chainlink  # chainlink | beads | builtin | github | linear | markdown | none
 
 # Chainlink-specific configuration (when task_tracker: chainlink)
 chainlink:
@@ -23,6 +23,12 @@ beads:
   auto_sync: true   # Auto-sync on git operations
   daemon: true      # Use background daemon for faster operations
   prefix: null      # Issue prefix (auto-generated if null)
+
+# Builtin-specific configuration (when task_tracker: builtin)
+# Uses Claude Code's native task system (~/.claude/tasks/)
+builtin:
+  task_list_id: null  # Auto-generated from project path if null
+  auto_set_env: true  # Auto-set CLAUDE_CODE_TASK_LIST_ID env var
 
 # Enforcement level: how strictly to enforce the workflow
 # - strict:  Block operations that violate workflow (tests must pass, traces required)

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import DPConfig, DegradationAction, TaskTracker, get_config
+from . import builtin_provider
 
 
 @dataclass
@@ -85,6 +86,21 @@ def check_provider_available(tracker: TaskTracker, project_dir: Path | None = No
 
         case TaskTracker.MARKDOWN:
             # Always available - uses local files
+            return ProviderStatus(True)
+
+        case TaskTracker.BUILTIN:
+            # Always available - uses Claude Code's native task system
+            # Ensure tasks directory exists
+            config = get_config()
+            task_list_id = builtin_provider.get_task_list_id(
+                project_dir, config.builtin.task_list_id
+            )
+            tasks_dir = builtin_provider.get_tasks_dir(task_list_id)
+            if not tasks_dir.exists():
+                tasks_dir.mkdir(parents=True, exist_ok=True)
+            # Set env var if configured
+            if config.builtin.auto_set_env:
+                builtin_provider.ensure_env_set(task_list_id)
             return ProviderStatus(True)
 
         case TaskTracker.NONE:
@@ -191,6 +207,13 @@ def get_ready_count(tracker: TaskTracker, project_dir: Path | None = None) -> in
                     return len(lines)
                 return None
 
+            case TaskTracker.BUILTIN:
+                config = get_config()
+                task_list_id = builtin_provider.get_task_list_id(
+                    project_dir, config.builtin.task_list_id
+                )
+                return builtin_provider.get_ready_count(task_list_id)
+
             case TaskTracker.NONE:
                 return None
 
@@ -226,6 +249,11 @@ def sync_tracker(tracker: TaskTracker, project_dir: Path | None = None) -> bool:
             case TaskTracker.CHAINLINK:
                 # Chainlink stores locally, no remote sync
                 # Use git for collaboration
+                return True
+
+            case TaskTracker.BUILTIN:
+                # Builtin stores in ~/.claude/tasks/, no sync needed
+                # Tasks are user-local, not git-tracked
                 return True
 
             case TaskTracker.GITHUB | TaskTracker.LINEAR:

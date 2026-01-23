@@ -11,8 +11,7 @@ Unified interface for task tracking, routing to the configured provider.
 
 Reads from `.claude/dp-config.yaml`:
 ```yaml
-tracking:
-  provider: "chainlink"  # chainlink | beads | github | linear | markdown | none
+task_tracker: "beads"  # beads | builtin | chainlink | github | linear | markdown | none
 ```
 
 ## Subcommands
@@ -27,8 +26,9 @@ Show tasks ready for work (no blockers).
 ```
 
 **Provider mapping**:
-- Chainlink: `chainlink ready`
 - Beads: `bd ready --json`
+- Builtin: Read `~/.claude/tasks/<list>/` JSON files with `status: pending` and no blockers
+- Chainlink: `chainlink ready`
 - GitHub: `gh issue list --label ready`
 - Linear: `linear issue list --state started`
 - Markdown: Scan `docs/tasks/*.md` for `status: ready`
@@ -143,37 +143,48 @@ Create a discovered task linked to current work.
 
 Not all features work with all providers. Choose based on your needs:
 
-| Feature | Chainlink | Beads | GitHub | Linear | Markdown | None |
-|---------|:---------:|:-----:|:------:|:------:|:--------:|:----:|
-| `ready` - find available work | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `create` - create tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `show` - view details | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `update` - change status | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `close` - complete tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
-| `discover` - linked discovery | ✅ | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
-| Dependency blocking | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
-| Auto-sync with remote | ❌ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| Offline support | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Session tracking | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Time tracking | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Hierarchical tree view | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Feature | Beads | Builtin | Chainlink | GitHub | Linear | Markdown | None |
+|---------|:-----:|:-------:|:---------:|:------:|:------:|:--------:|:----:|
+| `ready` - find available work | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `create` - create tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `show` - view details | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `update` - change status | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `close` - complete tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `discover` - linked discovery | ✅ | ✅ | ✅ | ⚠️ | ⚠️ | ❌ | ❌ |
+| Dependency blocking | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Git-tracked | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Auto-sync with remote | ✅ | ❌ | ❌ | ✅ | ✅ | ❌ | ❌ |
+| Offline support | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| Zero setup required | ❌ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Session tracking | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Time tracking | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Hierarchical tree view | ❌ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 **Legend**: ✅ Full support | ⚠️ Partial (creates task, no dependency link) | ❌ Not supported
 
 ## Provider Details
 
-### Chainlink (recommended)
-- **CLI**: `chainlink` (install: `cargo install chainlink` or build from source)
-- **Requires**: None (local markdown storage)
-- **Strengths**: Full dependency tracking, session/time tracking, hierarchical tree view, works offline
-- **Limitations**: No remote sync (use git for collaboration)
-- **Extra commands**: `tree`, `next`, `session`, `blocked`, `timer`
-
-### Beads
-- **CLI**: `bd` (install: see beads documentation)
+### Beads (recommended)
+- **CLI**: `bd` (install: `brew install beads`, `npm i -g beads-cli`, or `go install`)
 - **Requires**: Git repository
-- **Strengths**: Full dependency tracking, discovered-from linking, git-native sync, works offline
+- **Strengths**: Full dependency tracking, discovered-from linking, git-native sync, MCP server, works offline
 - **Limitations**: Requires beads CLI installation
+- **Note**: Recommended for team projects and git-tracked work
+
+### Builtin (Claude Code Native)
+- **CLI**: None required (uses Claude Code's `~/.claude/tasks/` system)
+- **Requires**: Claude Code v2.1.16+
+- **Strengths**: Zero setup, always available, dependency tracking via blocks/blockedBy
+- **Limitations**: Not git-tracked, user-local only, no issue types/priorities
+- **Note**: Tasks isolated per-project via `CLAUDE_CODE_TASK_LIST_ID` env var (auto-generated from project path)
+
+### Chainlink
+- **CLI**: `chainlink` (requires building from source - not publicly available)
+- **Requires**: Private source access or pre-built binary
+- **Strengths**: Full dependency tracking, session/time tracking, hierarchical tree view, works offline
+- **Limitations**: Not publicly installable; use Beads for similar features
+- **Extra commands**: `tree`, `next`, `session`, `blocked`, `timer`
+- **Note**: If Chainlink unavailable, disciplined-process gracefully falls back
 
 ### GitHub Issues
 - **CLI**: `gh` (install: `brew install gh` or https://cli.github.com)

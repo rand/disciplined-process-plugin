@@ -32,6 +32,7 @@ class TaskTracker(Enum):
     GITHUB = "github"
     LINEAR = "linear"
     MARKDOWN = "markdown"
+    BUILTIN = "builtin"  # Claude Code native task system
     NONE = "none"
 
 
@@ -58,6 +59,14 @@ class BeadsConfig:
     auto_sync: bool = True
     daemon: bool = True
     prefix: str | None = None
+
+
+@dataclass
+class BuiltinConfig:
+    """Claude Code builtin task system configuration."""
+
+    task_list_id: str | None = None  # If None, auto-generated from project path hash
+    auto_set_env: bool = True  # Auto-set CLAUDE_CODE_TASK_LIST_ID env var
 
 
 @dataclass
@@ -138,6 +147,7 @@ class DPConfig:
     task_tracker: TaskTracker = TaskTracker.CHAINLINK
     chainlink: ChainlinkConfig = field(default_factory=ChainlinkConfig)
     beads: BeadsConfig = field(default_factory=BeadsConfig)
+    builtin: BuiltinConfig = field(default_factory=BuiltinConfig)
     enforcement: EnforcementConfig = field(default_factory=EnforcementConfig)
     adversarial: AdversarialConfig = field(default_factory=AdversarialConfig)
     specs: SpecConfig = field(default_factory=SpecConfig)
@@ -282,6 +292,13 @@ class DPConfig:
             prefix=beads.get("prefix"),
         )
 
+        # Builtin config
+        builtin = data.get("builtin", {})
+        config.builtin = BuiltinConfig(
+            task_list_id=builtin.get("task_list_id"),
+            auto_set_env=builtin.get("auto_set_env", True),
+        )
+
         # Enforcement
         enforcement = data.get("enforcement", {})
         if isinstance(enforcement, str):
@@ -388,6 +405,10 @@ class DPConfig:
                 "auto_sync": self.beads.auto_sync,
                 "daemon": self.beads.daemon,
                 "prefix": self.beads.prefix,
+            },
+            "builtin": {
+                "task_list_id": self.builtin.task_list_id,
+                "auto_set_env": self.builtin.auto_set_env,
             },
             "enforcement": {
                 "level": self.enforcement.level.value,

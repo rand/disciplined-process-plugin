@@ -21,6 +21,7 @@ from lib.config import (
     ADRConfig,
     AdversarialConfig,
     BeadsConfig,
+    BuiltinConfig,
     ChainlinkConfig,
     ConfigVersion,
     DegradationAction,
@@ -65,14 +66,15 @@ class TestTaskTracker:
         tracker_values = [t.value for t in TaskTracker]
         assert "chainlink" in tracker_values
         assert "beads" in tracker_values
+        assert "builtin" in tracker_values
         assert "github" in tracker_values
         assert "linear" in tracker_values
         assert "markdown" in tracker_values
         assert "none" in tracker_values
 
-    def test_chainlink_is_default_recommended(self):
-        """Chainlink should be first (recommended)."""
-        assert TaskTracker.CHAINLINK.value == "chainlink"
+    def test_builtin_value(self):
+        """Builtin tracker should have correct value."""
+        assert TaskTracker.BUILTIN.value == "builtin"
 
 
 class TestDegradationAction:
@@ -149,6 +151,30 @@ class TestBeadsConfig:
         """Prefix should be None by default."""
         config = BeadsConfig()
         assert config.prefix is None
+
+
+class TestBuiltinConfig:
+    """Tests for BuiltinConfig dataclass."""
+
+    def test_default_task_list_id_none(self):
+        """Task list ID should be None by default (auto-generated)."""
+        config = BuiltinConfig()
+        assert config.task_list_id is None
+
+    def test_default_auto_set_env_enabled(self):
+        """Auto-set env var should be enabled by default."""
+        config = BuiltinConfig()
+        assert config.auto_set_env is True
+
+    def test_custom_task_list_id(self):
+        """Should accept custom task list ID."""
+        config = BuiltinConfig(task_list_id="my-project-tasks")
+        assert config.task_list_id == "my-project-tasks"
+
+    def test_disable_auto_set_env(self):
+        """Should allow disabling auto-set env."""
+        config = BuiltinConfig(auto_set_env=False)
+        assert config.auto_set_env is False
 
 
 class TestAdversarialConfig:

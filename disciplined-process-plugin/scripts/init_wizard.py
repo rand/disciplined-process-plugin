@@ -27,7 +27,7 @@ class WizardConfig:
 
     project_name: str = ""
     languages: list[str] = field(default_factory=list)
-    task_tracker: TaskTracker = TaskTracker.CHAINLINK
+    task_tracker: TaskTracker = TaskTracker.BEADS
     enforcement: str = "guided"
     adversarial_enabled: bool = True
     adversarial_model: str = "gemini-2.5-flash"
@@ -112,15 +112,20 @@ def check_cli_available(command: str) -> bool:
 def check_tracker_availability(project_dir: Path) -> dict[str, dict]:
     """Check which task trackers are available."""
     trackers = {
-        "chainlink": {
-            "available": check_cli_available("chainlink"),
-            "initialized": (project_dir / ".chainlink").is_dir(),
-            "install": "cargo install chainlink",
-        },
         "beads": {
             "available": check_cli_available("bd"),
             "initialized": (project_dir / ".beads").is_dir(),
-            "install": "pip install beads",
+            "install": "brew install beads  # or: npm i -g beads-cli",
+        },
+        "builtin": {
+            "available": True,  # Always available - Claude Code native
+            "initialized": True,
+            "install": None,
+        },
+        "chainlink": {
+            "available": check_cli_available("chainlink"),
+            "initialized": (project_dir / ".chainlink").is_dir(),
+            "install": "(requires private source access)",
         },
         "github": {
             "available": check_cli_available("gh"),
@@ -162,18 +167,24 @@ project:
 # Issue tracker selection
 task_tracker: {config.task_tracker.value}
 
-# Chainlink-specific configuration
+# Beads-specific configuration (recommended)
+beads:
+  auto_sync: true
+  daemon: true
+  prefix: null
+
+# Builtin-specific configuration (Claude Code native)
+builtin:
+  task_list_id: null  # Auto-generated from project path
+  auto_set_env: true
+
+# Chainlink-specific configuration (requires private source access)
 chainlink:
   features:
     sessions: true
     milestones: true
     time_tracking: true
   rules_path: .claude/rules/
-
-# Beads-specific configuration
-beads:
-  auto_sync: true
-  daemon: true
 
 # Enforcement level
 enforcement: {config.enforcement}
@@ -473,20 +484,25 @@ Adopt the disciplined-process-plugin for Claude Code, which provides:
 def initialize_tracker(tracker: TaskTracker, project_dir: Path) -> bool:
     """Initialize the selected task tracker."""
     try:
-        if tracker == TaskTracker.CHAINLINK:
-            if not (project_dir / ".chainlink").is_dir():
+        if tracker == TaskTracker.BEADS:
+            if not (project_dir / ".beads").is_dir():
                 subprocess.run(
-                    ["chainlink", "init"],
+                    ["bd", "init"],
                     cwd=project_dir,
                     capture_output=True,
                     timeout=30,
                 )
             return True
 
-        elif tracker == TaskTracker.BEADS:
-            if not (project_dir / ".beads").is_dir():
+        elif tracker == TaskTracker.BUILTIN:
+            # Builtin requires no initialization - handled by providers.py
+            # Just ensure the task list ID is set when provider is used
+            return True
+
+        elif tracker == TaskTracker.CHAINLINK:
+            if not (project_dir / ".chainlink").is_dir():
                 subprocess.run(
-                    ["bd", "init"],
+                    ["chainlink", "init"],
                     cwd=project_dir,
                     capture_output=True,
                     timeout=30,
@@ -510,16 +526,19 @@ def run_wizard(project_dir: Path) -> WizardConfig:
     trackers = check_tracker_availability(project_dir)
 
     # Default selections (wizard would prompt for these)
-    if trackers["chainlink"]["available"]:
-        config.task_tracker = TaskTracker.CHAINLINK
-    elif trackers["beads"]["available"]:
+    # Prefer Beads (recommended, public), then Builtin (zero-config), then Chainlink (power users)
+    if trackers["beads"]["available"]:
         config.task_tracker = TaskTracker.BEADS
+    elif trackers["chainlink"]["available"]:
+        config.task_tracker = TaskTracker.CHAINLINK
     else:
-        config.task_tracker = TaskTracker.MARKDOWN
+        # Builtin is always available as fallback
+        config.task_tracker = TaskTracker.BUILTIN
 
     # Check for migration opportunity
-    if config.task_tracker == TaskTracker.CHAINLINK and trackers["beads"]["initialized"]:
-        config.migrate_from_beads = True
+    if config.task_tracker == TaskTracker.BEADS and trackers["chainlink"]["initialized"]:
+        # Could offer to migrate from Chainlink to Beads
+        pass
 
     return config
 

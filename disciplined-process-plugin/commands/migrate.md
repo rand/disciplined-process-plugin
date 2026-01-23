@@ -1,11 +1,22 @@
 ---
 description: Migrate between task tracker providers
-argument-hint: <beads-to-chainlink|chainlink-to-beads> [--dry-run]
+argument-hint: <migration-path> [--dry-run]
 ---
 
 # Migrate Command
 
-Migrate issues between Beads and Chainlink task trackers with full data preservation.
+Migrate issues between task trackers with data preservation.
+
+## Available Migrations
+
+| Migration | Command | Data Preserved | Data Embedded |
+|-----------|---------|----------------|---------------|
+| Beads → Chainlink | `beads-to-chainlink` | Full | - |
+| Chainlink → Beads | `chainlink-to-beads` | Partial | Sessions lost |
+| Beads → Builtin | `beads-to-builtin` | Partial | `[P1] [bug]` prefix |
+| Builtin → Beads | `builtin-to-beads` | Full | Extracts from prefix |
+| Chainlink → Builtin | `chainlink-to-builtin` | Partial | `[P1]` prefix |
+| Builtin → Chainlink | `builtin-to-chainlink` | Full | Extracts from prefix |
 
 ## Subcommands
 
@@ -88,6 +99,67 @@ Warning: The following data will be lost during migration:
 
 Continue? [y/N]
 ```
+
+### beads-to-builtin
+Migrate from Beads to Claude Code's builtin task system.
+
+```
+/dp:migrate beads-to-builtin [--dry-run]
+```
+
+**Requirements**:
+- `.beads/` directory must exist
+- Claude Code v2.1.16+
+
+**Data Embedding**: Beads has more metadata than builtin supports. To preserve data for potential reverse migration, metadata is embedded in the subject line:
+
+| Beads Field | Builtin Representation |
+|-------------|------------------------|
+| Priority (P0-P4) | `[P1]` prefix in subject |
+| Issue type | `[bug]`, `[feature]`, `[task]` prefix |
+| Labels | Appended to description |
+| Dependencies | Preserved via blocks/blockedBy |
+
+**Example**: `P1 bug "Fix parser"` becomes `[P1] [bug] Fix parser` in builtin.
+
+### builtin-to-beads
+Migrate from builtin back to Beads with full metadata restoration.
+
+```
+/dp:migrate builtin-to-beads [--dry-run]
+```
+
+**Requirements**:
+- Tasks in `~/.claude/tasks/<list>/`
+- `bd` CLI installed, git repository
+
+**Metadata Extraction**: Parses embedded prefixes to restore original fields:
+- `[P1] [bug] Fix parser` → Priority 1, Type bug, Title "Fix parser"
+- Labels extracted from description footer
+
+### chainlink-to-builtin
+Migrate from Chainlink to builtin.
+
+```
+/dp:migrate chainlink-to-builtin [--dry-run]
+```
+
+**Data Loss**:
+- Sessions and time tracking lost
+- Milestones converted to description notes
+- Priority preserved via `[P1]` prefix
+
+### builtin-to-chainlink
+Migrate from builtin to Chainlink with full restoration.
+
+```
+/dp:migrate builtin-to-chainlink [--dry-run]
+```
+
+**Requirements**:
+- `chainlink` CLI installed (requires private source access)
+
+**Metadata Extraction**: Same as builtin-to-beads prefix parsing.
 
 ## Options
 

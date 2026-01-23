@@ -106,14 +106,15 @@ See [references/enforcement-config.md](./references/enforcement-config.md) for p
 
 ### Task Tracking Providers
 
-| Provider | Requirements | Key Features |
-|----------|--------------|--------------|
-| **Chainlink** (recommended) | `chainlink` CLI | Sessions, milestones, time tracking, dependencies |
-| **Beads** | Git, `bd` CLI | Git-backed, distributed, offline-first |
-| **GitHub Issues** | `gh` CLI | Team collaboration, web UI |
-| **Linear** | `linear` CLI | Native priorities, projects |
-| **Markdown** | None | No dependencies, human-readable |
-| **None** | None | External tracking |
+| Provider | Requirements | Key Features | Availability |
+|----------|--------------|--------------|--------------|
+| **Beads** (recommended) | Git, `bd` CLI | Git-native, dependencies, MCP server | Public |
+| **Builtin** | Claude Code v2.1.16+ | Zero setup, dependency tracking | Built-in |
+| **Chainlink** | `chainlink` CLI | Sessions, time tracking, tree view | Private |
+| **GitHub Issues** | `gh` CLI | Team collaboration, web UI | Public |
+| **Linear** | `linear` CLI | Native priorities, projects | Public |
+| **Markdown** | None | No dependencies, human-readable | Built-in |
+| **None** | None | External tracking | - |
 
 See [commands/task.md](./commands/task.md) for the full feature matrix and provider details.
 
@@ -153,7 +154,6 @@ project/
 │       ├── template.md
 │       └── 0001-adopt-disciplined-process.md
 ├── CLAUDE.md               # Project context for Claude
-├── .chainlink/             # Task tracker (if using Chainlink)
 └── .beads/                 # Task tracker (if using Beads)
 ```
 
@@ -171,12 +171,11 @@ project:
     - python
 
 # Issue tracker selection
-task_tracker: chainlink  # chainlink | beads | github | linear | markdown | none
+task_tracker: beads  # beads | builtin | chainlink | github | linear | markdown | none
 
-# Chainlink-specific configuration
-chainlink:
-  features:
-    sessions: true
+# Beads-specific configuration
+beads:
+  auto_sync: true
     milestones: true
     time_tracking: true
   rules_path: .claude/rules/
