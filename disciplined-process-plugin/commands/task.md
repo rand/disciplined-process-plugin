@@ -108,16 +108,64 @@ Update task fields.
 ```
 
 ### close
-Close a completed task.
+Close a completed task with optional summary generation.
 
 ```
-/dp:task close <id> [--reason "<reason>"]
+/dp:task close <id> [--reason "<reason>"] [--summary]
 ```
+
+**Arguments**:
+- `--reason`: Brief explanation of completion
+- `--summary`: Generate detailed summary (see below)
 
 **Example**:
 ```
 /dp:task close bd-a1b2 --reason "Implemented per SPEC-03.07, tests passing"
 → Closed bd-a1b2
+```
+
+**Summary Generation** (`--summary`):
+
+When closing with `--summary`, auto-generates a completion summary:
+
+```
+/dp:task close bd-a1b2 --summary
+→ Closed bd-a1b2
+
+## Task Summary: bd-a1b2
+
+**Completed:** 2024-01-23
+**Duration:** ~45 min (if session tracking enabled)
+
+### Specs Implemented
+- SPEC-03.07 (type validation)
+
+### Files Changed
+- src/types/validator.ts (new, 142 lines)
+- src/types/index.ts (modified)
+- tests/types/validator.test.ts (new, 89 lines)
+
+### Tests Added
+- 5 tests in validator.test.ts (all passing)
+
+### Discovered Work
+- bd-3e7a: Edge case: empty input (deviation:edge-case)
+
+### Notes
+Implementation followed ADR-0003 for validation approach.
+```
+
+**Summary Content** (auto-detected):
+- Specs: Found via `@trace` markers in changed files
+- Files: From git diff since task started
+- Tests: Test files with `@trace` to task specs
+- Discovered: Tasks linked with `discovered-from`
+
+**Configuration** (`dp-config.yaml`):
+```yaml
+task_close:
+  auto_summary: false     # Always generate summary
+  summary_to_notes: true  # Save summary to task notes field
 ```
 
 ### discover
