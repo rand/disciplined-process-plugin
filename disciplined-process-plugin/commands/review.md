@@ -1,6 +1,6 @@
 ---
 description: Run code review checklist
-argument-hint: [adversarial] [--staged] [--full] [--json]
+argument-hint: [adversarial|--plan] [--staged] [--full] [--json]
 ---
 
 # Code Review Command
@@ -11,6 +11,7 @@ Run a structured code review against current changes.
 
 - **Standard** (default): Checklist-based review by Claude
 - **Adversarial**: VDD-style review using Gemini with fresh context
+- **Plan**: Pre-execution validation of specs and tasks
 
 ## Behavior
 
@@ -113,6 +114,8 @@ Run `/dp:review --file-issues` to create tasks for non-blocking issues.
 - `--json`: Output in JSON format
 - `--file-issues`: Create tasks for non-blocking issues
 - `--strict`: Treat spec compliance as blocking (default in strict mode)
+- `--plan`: Run pre-execution plan validation instead of code review
+- `--verify`: Include goal-backward verification in review
 
 ## Integration with Hooks
 
@@ -267,3 +270,76 @@ adversarial_review:
 - rlm-claude-code installed and configured
 - `GOOGLE_API_KEY` set for Gemini access
 - `adversarial_review.enabled: true` in dp-config.yaml
+
+---
+
+## Plan Validation Mode
+
+Pre-execution validation of specs and tasks to catch issues before implementation.
+
+```
+/dp:review --plan              # Validate current plan/tasks
+/dp:review --plan --spec SPEC-03  # Validate specific spec section
+```
+
+### Validation Checks
+
+| Dimension | Question |
+|-----------|----------|
+| **Requirement Coverage** | Does every spec have implementing task(s)? |
+| **Task Completeness** | Does every task have verification criteria? |
+| **Dependency Correctness** | Are dependencies valid and acyclic? |
+
+### Behavior
+
+1. **Fetch specs** from `docs/spec/` directory
+2. **Fetch tasks** from configured task tracker
+3. **Check coverage**: Match specs to tasks via `@trace` markers
+4. **Check completeness**: Verify tasks have acceptance criteria
+5. **Check dependencies**: Detect cycles and invalid references
+6. **Report status**: PASS, WARN, or FAIL
+
+### Output Format
+
+```
+Plan Validation
+===============
+
+Requirement Coverage:
+  [ok] SPEC-03.01 (User login) → task-001
+  [ok] SPEC-03.02 (User logout) → task-002
+  [WARN] SPEC-03.03 (Password reset) → NO TASK (orphan)
+
+Task Completeness:
+  [ok] task-001 (Implement login) - has Acceptance Criteria
+  [WARN] task-002 (Implement logout) - missing verification criteria
+
+Dependencies:
+  [ok] No circular dependencies
+  [ok] All references valid
+
+Status: WARN
+  0 blocking, 2 warnings
+```
+
+### Validation Statuses
+
+| Status | Meaning | Action |
+|--------|---------|--------|
+| **PASS** | All checks pass | Safe to proceed |
+| **WARN** | Warnings only | Can proceed with caution |
+| **FAIL** | Blocking issues | Resolve before execution |
+
+### Configuration
+
+```yaml
+plan_validation:
+  auto_on_plan_mode: false  # Run when entering plan mode
+  require_acceptance_criteria: true
+  check_dependencies: true  # Requires Beads/Chainlink
+```
+
+### See Also
+
+- [SPEC-06: Plan Validation](../docs/spec/06-plan-validation.md)
+- `/dp:verify` - Goal-backward verification after implementation
