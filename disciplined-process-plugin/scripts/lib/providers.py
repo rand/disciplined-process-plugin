@@ -96,8 +96,13 @@ def check_provider_available(tracker: TaskTracker, project_dir: Path | None = No
                 project_dir, config.builtin.task_list_id
             )
             tasks_dir = builtin_provider.get_tasks_dir(task_list_id)
-            if not tasks_dir.exists():
-                tasks_dir.mkdir(parents=True, exist_ok=True)
+            # Try to create directory, but don't fail if permissions denied
+            try:
+                if not tasks_dir.exists():
+                    tasks_dir.mkdir(parents=True, exist_ok=True)
+            except PermissionError:
+                # Can't create dir (e.g., in sandbox), but provider is still available
+                pass
             # Set env var if configured
             if config.builtin.auto_set_env:
                 builtin_provider.ensure_env_set(task_list_id)
