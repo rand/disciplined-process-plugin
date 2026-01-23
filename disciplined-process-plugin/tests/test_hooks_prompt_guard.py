@@ -104,10 +104,9 @@ class TestDetectLanguageFromPrompt:
         """Should detect Python from prompt."""
         from prompt_guard import detect_language_from_prompt
 
-        # Note: File extensions like .py don't match due to word boundary \b
-        # in regex pattern - tracked as known limitation
         prompts = [
             "Write a Python script",
+            "Create a .py file",
             "Run pytest tests",
             "Install with pip",
         ]
@@ -119,10 +118,9 @@ class TestDetectLanguageFromPrompt:
         """Should detect TypeScript from prompt."""
         from prompt_guard import detect_language_from_prompt
 
-        # Note: File extensions like .tsx don't match due to word boundary \b
-        # in regex pattern - tracked as known limitation
         prompts = [
             "Create a TypeScript file",
+            "Add a .tsx component",
             "Run npm install",
             "Use yarn to add packages",
         ]
@@ -134,10 +132,9 @@ class TestDetectLanguageFromPrompt:
         """Should detect Rust from prompt."""
         from prompt_guard import detect_language_from_prompt
 
-        # Note: File extensions like .rs don't match due to word boundary \b
-        # in regex pattern - tracked as known limitation
         prompts = [
             "Write Rust code",
+            "Create a .rs file",
             "Run cargo build",
             "Use rustc compiler",
         ]

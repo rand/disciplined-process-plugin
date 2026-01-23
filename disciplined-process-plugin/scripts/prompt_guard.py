@@ -59,12 +59,14 @@ def detect_language_from_prompt(prompt: str) -> list[str]:
     """Detect programming languages mentioned in the prompt."""
     languages = []
 
+    # Patterns use word boundaries for keywords but special handling for extensions
+    # Extensions like .py need (?<!\w) instead of \b at start (no word char before dot)
     lang_patterns = {
-        "python": r"\b(python|\.py|pytest|pip|django|flask)\b",
-        "typescript": r"\b(typescript|\.ts|\.tsx|npm|yarn|react|next)\b",
-        "javascript": r"\b(javascript|\.js|\.jsx|node)\b",
-        "rust": r"\b(rust|\.rs|cargo|rustc)\b",
-        "go": r"\b(golang|\.go|go\s+build|go\s+run)\b",
+        "python": r"(?:\bpython\b|\bpytest\b|\bpip\b|\bdjango\b|\bflask\b|(?<!\w)\.py\b)",
+        "typescript": r"(?:\btypescript\b|\bnpm\b|\byarn\b|\breact\b|\bnext\b|(?<!\w)\.tsx?\b)",
+        "javascript": r"(?:\bjavascript\b|\bnode\b|(?<!\w)\.jsx?\b)",
+        "rust": r"(?:\brust\b|\bcargo\b|\brustc\b|(?<!\w)\.rs\b)",
+        "go": r"(?:\bgolang\b|\bgo\s+build\b|\bgo\s+run\b|(?<!\w)\.go\b)",
     }
 
     for lang, pattern in lang_patterns.items():
