@@ -1,0 +1,63 @@
+# Disciplined Process Plugin Configuration
+# Version: 2.0
+# Project: disciplined-process-plugin (dogfooding)
+
+version: "2.0"
+
+project:
+  name: "disciplined-process-plugin"
+  language: "python"
+
+# Task tracker - using Beads for this project
+task_tracker: beads
+
+beads:
+  auto_sync: true
+  daemon: true
+  prefix: "ph"  # project-specific prefix
+
+# Enforcement level (strict | guided | minimal)
+enforcement:
+  level: guided
+  overrides:
+    pre_commit_tests: strict
+    trace_markers: guided
+    spec_issue_links: guided
+
+# Adversarial review configuration
+adversarial_review:
+  enabled: false  # Enable when rlm-core integration is ready
+  model: gemini-2.5-flash
+  max_iterations: 5
+  trigger: on_review
+  fresh_context: true
+
+# Specification configuration
+specs:
+  directory: disciplined-process-plugin/docs/spec
+  id_format: "SPEC-{section:02d}.{item:02d}"
+  require_issue_link: false
+
+# ADR configuration
+adrs:
+  directory: docs/adr
+  id_format: "ADR-{number:04d}"
+  template: null
+
+# Testing configuration
+testing:
+  frameworks:
+    unit: pytest
+    property: hypothesis
+  directories:
+    unit: disciplined-process-plugin/tests
+    property: disciplined-process-plugin/tests
+
+# Degradation behavior
+degradation:
+  on_tracker_unavailable: warn
+  on_rlm_unavailable: skip
+  on_adversary_unavailable: skip
+
+# Hooks (managed by plugin)
+hooks: {}

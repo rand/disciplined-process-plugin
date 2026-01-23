@@ -16,14 +16,15 @@
 
 ## Sections
 
-| Section | Description |
-|---------|-------------|
-| SPEC-00 | Overview (this document) |
-| SPEC-01 | Task Tracking |
-| SPEC-02 | Specifications and Traceability |
-| SPEC-03 | Architecture Decision Records |
-| SPEC-04 | Code Review |
-| SPEC-05 | Goal-Backward Verification |
+| Section | Description | File |
+|---------|-------------|------|
+| SPEC-00 | Overview (this document) | `00-overview.md` |
+| SPEC-01 | Task Tracking | `01-task-tracking.md` |
+| SPEC-02 | Specifications and Traceability | `02-specifications.md` |
+| SPEC-03 | Architecture Decision Records | `03-architecture-decisions.md` |
+| SPEC-04 | Code Review | `04-code-review.md` |
+| SPEC-05 | Goal-Backward Verification | `05-verification.md` |
+| SPEC-06 | Plan Validation | `06-plan-validation.md` |
 
 ## Definitions
 
