@@ -1,29 +1,39 @@
 {
   "$schema": "https://claude.ai/schemas/hooks.json",
-  "description": "Disciplined process hooks for workflow enforcement",
+  "description": "Disciplined process hooks - hybrid prompt + Go binary approach",
   "hooks": {
-    "PreToolUse": [
+    "SessionStart": [
       {
-        "matcher": "Bash(git commit*)",
-        "description": "Enforce tests pass before commit (strict mode)",
+        "description": "Initialize disciplined process, detect tracker, check MCP health",
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_commit.py",
-            "timeout": 120000,
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh\"",
+            "timeout": 10000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git commit*)",
+        "description": "Enforce tests pass before commit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "BLOCKING: Before committing, verify that all relevant tests pass. If you haven't run tests for the changes being committed, run them now. Do not proceed with the commit until tests pass. If there are no tests for the changed code, note this as a gap.",
             "blocking": true
           }
         ]
       },
       {
         "matcher": "Edit(*)|Write(*)|MultiEdit(*)",
-        "description": "Block protected files and enforce spec-first workflow",
+        "description": "Enforce spec-first workflow for implementation files",
         "hooks": [
           {
-            "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_edit.py",
-            "timeout": 5000,
-            "blocking": true
+            "type": "prompt",
+            "prompt": "Check: Is this edit to an implementation file (not a test, spec, or doc)? If so, ensure a relevant [SPEC-XX.YY] reference exists in the codebase for the feature being modified. If you're implementing a new feature without a spec, suggest creating one first with /dp:spec. For bug fixes and minor changes, this check can be skipped."
           }
         ]
       },
@@ -33,8 +43,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/pre_push.py",
-            "timeout": 30000,
+            "command": "bd sync --flush-only 2>/dev/null || true",
+            "timeout": 15000,
             "blocking": false
           }
         ]
@@ -42,51 +52,25 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit(*.py)|Edit(*.ts)|Edit(*.tsx)|Edit(*.js)|Edit(*.jsx)|Edit(*.go)|Edit(*.rs)",
-        "description": "Run formatters and update traceability on edits",
+        "matcher": "Edit(*.py)|Edit(*.ts)|Edit(*.tsx)|Edit(*.js)|Edit(*.jsx)|Edit(*.go)|Edit(*.rs)|Edit(*.zig)",
+        "description": "Validate spec trace markers after implementation edits",
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_edit.py",
-            "timeout": 10000,
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hook-dispatch.sh\" trace-validator",
+            "timeout": 5000,
             "blocking": false
           }
         ]
       },
       {
-        "matcher": "Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.py)|Write(*.rs)|Write(*.go)|Write(*.zig)",
-        "description": "Check for spec trace markers in implementation files",
+        "matcher": "Write(*.py)|Write(*.ts)|Write(*.tsx)|Write(*.js)|Write(*.jsx)|Write(*.go)|Write(*.rs)|Write(*.zig)",
+        "description": "Validate spec trace markers after file writes",
         "hooks": [
           {
             "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/post_write.py \"$CLAUDE_FILE_PATHS\"",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hook-dispatch.sh\" trace-validator",
             "timeout": 5000,
-            "blocking": false
-          }
-        ]
-      }
-    ],
-    "SessionStart": [
-      {
-        "description": "Check health and remind about ready work at session start",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/session_start.py",
-            "timeout": 10000,
-            "blocking": false
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "description": "Handle session end, check for uncommitted work",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/stop_handler.py",
-            "timeout": 10000,
             "blocking": false
           }
         ]
@@ -94,13 +78,22 @@
     ],
     "UserPromptSubmit": [
       {
-        "description": "Validate spec references and inject language rules",
+        "description": "Analyze request for disciplined process phase and spec references",
         "hooks": [
           {
-            "type": "command",
-            "command": "cd \"${CLAUDE_PLUGIN_ROOT}\" && .venv/bin/python scripts/prompt_guard.py",
-            "timeout": 5000,
-            "blocking": false
+            "type": "prompt",
+            "prompt": "Analyze this request in the context of the disciplined process workflow. Consider: (1) What phase are we in? (orient/spec/decide/test/implement/review/close) (2) Does this request reference or require a spec? (3) Should an ADR be created for any architectural decision implied? (4) Are there task tracker items that should be updated? Silently incorporate these considerations into your response without explicitly mentioning this analysis unless relevant."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "description": "Session compliance review and cleanup",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before ending this session, check: (1) Are there uncommitted changes that should be committed? (2) Are there open task tracker items that should be updated or closed? (3) Has `bd sync --flush-only` been run? (4) Were any specs or ADRs modified that need review? Briefly mention any outstanding items to the user."
           }
         ]
       }
