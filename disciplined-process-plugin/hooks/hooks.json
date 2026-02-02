@@ -1,6 +1,6 @@
 {
   "$schema": "https://claude.ai/schemas/hooks.json",
-  "description": "Disciplined process hooks - hybrid prompt + Go binary approach",
+  "description": "Disciplined process hooks - command hooks providing dynamic state context",
   "hooks": {
     "SessionStart": [
       {
@@ -10,6 +10,19 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/session-start.sh\"",
             "timeout": 10000,
+            "blocking": false
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "description": "Inject current DP phase and active task as context",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/phase-context.py\"",
+            "timeout": 2000,
             "blocking": false
           }
         ]
@@ -28,12 +41,14 @@
         ]
       },
       {
-        "matcher": "Edit(*)|Write(*)|MultiEdit(*)",
-        "description": "Enforce spec-first workflow for implementation files",
+        "matcher": "Edit(*)|Write(*)",
+        "description": "Check spec references in edited file (informational, never blocks)",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Check: Is this edit to an implementation file (not a test, spec, or doc)? If so, ensure a relevant [SPEC-XX.YY] reference exists in the codebase for the feature being modified. If you're implementing a new feature without a spec, suggest creating one first with /dp:spec. For bug fixes and minor changes, this check can be skipped."
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/spec-info.py\"",
+            "timeout": 3000,
+            "blocking": false
           }
         ]
       },
@@ -76,24 +91,15 @@
         ]
       }
     ],
-    "UserPromptSubmit": [
-      {
-        "description": "Analyze request for disciplined process phase and spec references",
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "Analyze this request in the context of the disciplined process workflow. Consider: (1) What phase are we in? (orient/spec/decide/test/implement/review/close) (2) Does this request reference or require a spec? (3) Should an ADR be created for any architectural decision implied? (4) Are there task tracker items that should be updated? When you detect a phase transition (e.g., moving from orient to spec, or from test to implement), note it silently. The phase-emitter hook handles cross-plugin coordination automatically. Silently incorporate these considerations into your response without explicitly mentioning this analysis unless relevant."
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
-        "description": "Session compliance review and cleanup",
+        "description": "Check for uncommitted changes and open tasks before session end",
         "hooks": [
           {
-            "type": "prompt",
-            "prompt": "Before ending this session, check: (1) Are there uncommitted changes that should be committed? (2) Are there open task tracker items that should be updated or closed? (3) Has `bd sync --flush-only` been run? (4) Were any specs or ADRs modified that need review? Briefly mention any outstanding items to the user."
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session-end-check.py\"",
+            "timeout": 10000,
+            "blocking": false
           }
         ]
       }
