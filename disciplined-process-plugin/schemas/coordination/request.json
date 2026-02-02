@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "coordination/request.json",
+  "title": "RequestEvent",
+  "allOf": [
+    { "$ref": "../event-base.json" },
+    {
+      "type": "object",
+      "required": ["type", "target", "action", "request_id"],
+      "properties": {
+        "type": { "const": "request" },
+        "target": { "enum": ["rlm-claude-code", "disciplined-process"] },
+        "action": { "type": "string" },
+        "request_id": { "type": "string" },
+        "params": { "type": "object", "additionalProperties": true },
+        "timeout_ms": { "type": "integer" }
+      }
+    }
+  ]
+}
