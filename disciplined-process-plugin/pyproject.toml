@@ -37,7 +37,7 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["scripts", "scripts.lib"]
+packages = ["scripts", "scripts.legacy", "scripts.legacy.lib", "scripts.events"]
 package-dir = {"" = "."}
 
 [tool.setuptools.package-data]

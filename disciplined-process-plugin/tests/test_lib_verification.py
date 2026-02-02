@@ -13,7 +13,7 @@ from textwrap import dedent
 import pytest
 
 # Import module under test
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
 from lib.verification import (
     VerificationLevel,
     VerificationStatus,

@@ -8,7 +8,7 @@ from unittest import mock
 
 import pytest
 
-from scripts.lib.builtin_provider import (
+from lib.builtin_provider import (
     add_blocker,
     create_task,
     ensure_env_set,
@@ -89,7 +89,7 @@ class TestListTasks:
         """Should read and return task data from JSON files."""
         # Create mock tasks directory
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             # Create some task files
             task1 = {"id": "1", "subject": "Task 1", "status": "pending"}
@@ -106,7 +106,7 @@ class TestListTasks:
     def test_ignores_hidden_files(self, tmp_path):
         """Should skip files starting with dot."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             task1 = {"id": "1", "subject": "Visible"}
             hidden = {"id": "h", "subject": "Hidden"}
@@ -125,7 +125,7 @@ class TestGetReadyCount:
     def test_counts_pending_tasks_without_blockers(self, tmp_path):
         """Should count tasks that are pending with no blockedBy."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             # Ready: pending, no blockers
             task1 = {"id": "1", "subject": "Ready", "status": "pending", "blockedBy": []}
@@ -156,7 +156,7 @@ class TestCreateTask:
     def test_creates_task_with_defaults(self, tmp_path):
         """Should create task with default values."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             task = create_task("test-list", "My Task")
 
@@ -174,7 +174,7 @@ class TestCreateTask:
     def test_creates_task_with_description(self, tmp_path):
         """Should include description when provided."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             task = create_task("test-list", "My Task", description="Details here")
             assert task["description"] == "Details here"
@@ -182,7 +182,7 @@ class TestCreateTask:
     def test_creates_task_with_active_form(self, tmp_path):
         """Should include activeForm when provided."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             task = create_task(
                 "test-list", "Run tests", active_form="Running tests"
@@ -192,7 +192,7 @@ class TestCreateTask:
     def test_increments_task_id(self, tmp_path):
         """Should increment ID based on existing tasks."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             task1 = create_task("test-list", "First")
             task2 = create_task("test-list", "Second")
@@ -209,7 +209,7 @@ class TestUpdateTask:
     def test_updates_existing_task(self, tmp_path):
         """Should update fields on existing task."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             # Create a task first
             create_task("test-list", "Original")
@@ -223,7 +223,7 @@ class TestUpdateTask:
     def test_returns_none_for_nonexistent_task(self, tmp_path):
         """Should return None when task doesn't exist."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             result = update_task("test-list", "999", status="done")
             assert result is None
@@ -231,7 +231,7 @@ class TestUpdateTask:
     def test_merges_blocker_lists(self, tmp_path):
         """Should merge blockedBy lists instead of replacing."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             # Create task with existing blocker
             task_data = {
@@ -255,7 +255,7 @@ class TestAddBlocker:
     def test_adds_bidirectional_blocking(self, tmp_path):
         """Should update both tasks with blocking relationship."""
         with mock.patch(
-            "scripts.lib.builtin_provider.get_tasks_dir", return_value=tmp_path
+            "lib.builtin_provider.get_tasks_dir", return_value=tmp_path
         ):
             # Create two tasks
             create_task("test-list", "Task 1")

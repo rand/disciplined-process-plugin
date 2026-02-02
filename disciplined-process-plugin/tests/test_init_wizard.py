@@ -14,7 +14,7 @@ from unittest.mock import patch
 import pytest
 
 # Add scripts to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
 
 
 class TestWizardConfig:

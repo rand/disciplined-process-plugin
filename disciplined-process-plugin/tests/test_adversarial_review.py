@@ -16,7 +16,7 @@ import pytest
 from hypothesis import given, settings, strategies as st
 
 # Import module under test
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
 from adversarial_review import (
     AdversaryResponse,
     Critique,

@@ -19,15 +19,15 @@ class TestRunStartupHealthCheck:
         """Should return degradation level from health checks."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.degradation import DegradationLevel
 
-        with patch("scripts.session_start.run_health_checks") as mock:
+        with patch("session_start.run_health_checks") as mock:
             mock_state = MagicMock()
             mock_state.level = DegradationLevel.FULL
             mock.return_value = mock_state
 
-            from scripts.session_start import run_startup_health_check
+            from session_start import run_startup_health_check
 
             level = run_startup_health_check()
             assert level == DegradationLevel.FULL
@@ -36,13 +36,13 @@ class TestRunStartupHealthCheck:
         """Should return FULL level on exception."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.degradation import DegradationLevel
 
-        with patch("scripts.session_start.run_health_checks") as mock:
+        with patch("session_start.run_health_checks") as mock:
             mock.side_effect = Exception("Health check failed")
 
-            from scripts.session_start import run_startup_health_check
+            from session_start import run_startup_health_check
 
             level = run_startup_health_check()
             assert level == DegradationLevel.FULL
@@ -55,11 +55,11 @@ class TestShowDegradationStatus:
         """Should not output anything for FULL level."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.degradation import DegradationLevel
 
-        with patch("scripts.session_start.feedback") as mock_feedback:
-            from scripts.session_start import show_degradation_status
+        with patch("session_start.feedback") as mock_feedback:
+            from session_start import show_degradation_status
 
             show_degradation_status(DegradationLevel.FULL)
             mock_feedback.assert_not_called()
@@ -68,11 +68,11 @@ class TestShowDegradationStatus:
         """Should show warning for REDUCED level."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.degradation import DegradationLevel
 
-        with patch("scripts.session_start.feedback") as mock_feedback:
-            from scripts.session_start import show_degradation_status
+        with patch("session_start.feedback") as mock_feedback:
+            from session_start import show_degradation_status
 
             show_degradation_status(DegradationLevel.REDUCED)
             mock_feedback.assert_called_once()
@@ -87,15 +87,15 @@ class TestShowReadyWork:
         """Should skip showing work in safe mode."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.config import DPConfig
         from lib.degradation import DegradationLevel
 
         config = DPConfig()
 
-        with patch("scripts.session_start.get_project_dir") as mock_dir:
-            with patch("scripts.session_start.check_provider_available") as mock_check:
-                from scripts.session_start import show_ready_work
+        with patch("session_start.get_project_dir") as mock_dir:
+            with patch("session_start.check_provider_available") as mock_check:
+                from session_start import show_ready_work
 
                 show_ready_work(config, DegradationLevel.SAFE)
 
@@ -106,22 +106,22 @@ class TestShowReadyWork:
         """Should skip if tracker is NONE."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.config import DPConfig, TaskTracker
         from lib.degradation import DegradationLevel
 
         config = DPConfig()
         config.task_tracker = TaskTracker.NONE
 
-        with patch("scripts.session_start.get_project_dir") as mock_dir:
+        with patch("session_start.get_project_dir") as mock_dir:
             mock_dir.return_value = Path(".")
-            with patch("scripts.session_start.check_provider_available") as mock_check:
+            with patch("session_start.check_provider_available") as mock_check:
                 mock_status = MagicMock()
                 mock_status.available = True
                 mock_check.return_value = mock_status
 
-                with patch("scripts.session_start.get_ready_count") as mock_count:
-                    from scripts.session_start import show_ready_work
+                with patch("session_start.get_ready_count") as mock_count:
+                    from session_start import show_ready_work
 
                     show_ready_work(config, DegradationLevel.FULL)
 
@@ -136,20 +136,20 @@ class TestMain:
         """Main should return 0 on success."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
         from lib.degradation import DegradationLevel
 
-        with patch("scripts.session_start.run_startup_health_check") as mock_health:
+        with patch("session_start.run_startup_health_check") as mock_health:
             mock_health.return_value = DegradationLevel.FULL
-            with patch("scripts.session_start.get_config") as mock_config:
+            with patch("session_start.get_config") as mock_config:
                 mock_config.return_value = MagicMock()
-                with patch("scripts.session_start.get_project_dir") as mock_dir:
+                with patch("session_start.get_project_dir") as mock_dir:
                     mock_dir.return_value = Path(".")
                     with patch(
-                        "scripts.session_start.show_chainlink_session_context"
+                        "session_start.show_chainlink_session_context"
                     ):
-                        with patch("scripts.session_start.show_ready_work"):
-                            from scripts.session_start import main
+                        with patch("session_start.show_ready_work"):
+                            from session_start import main
 
                             result = main()
                             assert result == 0
@@ -158,12 +158,12 @@ class TestMain:
         """Main should return 0 even on exception (graceful degradation)."""
         import sys
 
-        sys.path.insert(0, "scripts")
+        sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "legacy"))
 
-        with patch("scripts.session_start.run_startup_health_check") as mock:
+        with patch("session_start.run_startup_health_check") as mock:
             mock.side_effect = Exception("Test error")
-            with patch("scripts.session_start.feedback"):
-                from scripts.session_start import main
+            with patch("session_start.feedback"):
+                from session_start import main
 
                 result = main()
                 assert result == 0  # Should not crash

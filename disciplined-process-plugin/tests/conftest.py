@@ -14,7 +14,7 @@ from typing import Any, Generator
 import pytest
 
 # Add scripts directory to path for imports
-SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
+SCRIPTS_DIR = Path(__file__).parent.parent / "scripts" / "legacy"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 
