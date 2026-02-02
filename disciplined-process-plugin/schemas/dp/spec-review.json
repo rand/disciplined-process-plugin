@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dp/spec-review.json",
+  "title": "SpecReviewEvent",
+  "allOf": [
+    { "$ref": "../event-base.json" },
+    {
+      "type": "object",
+      "required": ["type", "spec_id", "reviewer", "findings", "confidence"],
+      "properties": {
+        "type": { "const": "spec_review" },
+        "spec_id": { "type": "string", "pattern": "^SPEC-\\d+(\\.\\d+)?$" },
+        "reviewer": { "enum": ["claude", "gemini", "human", "automated"] },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["severity", "description"],
+            "properties": {
+              "severity": { "enum": ["critical", "major", "minor", "info"] },
+              "description": { "type": "string" },
+              "location": { "type": "string" },
+              "suggestion": { "type": "string" },
+              "resolved": { "type": "boolean", "default": false }
+            }
+          }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "approved": { "type": "boolean" }
+      }
+    }
+  ]
+}

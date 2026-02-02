@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "dp/task-update.json",
+  "title": "TaskUpdateEvent",
+  "allOf": [
+    { "$ref": "../event-base.json" },
+    {
+      "type": "object",
+      "required": ["type", "task_id", "action"],
+      "properties": {
+        "type": { "const": "task_update" },
+        "task_id": { "type": "string" },
+        "action": { "enum": ["created", "updated", "started", "blocked", "completed", "archived"] },
+        "title": { "type": "string" },
+        "priority": { "type": "integer", "minimum": 0, "maximum": 4 },
+        "spec_refs": { "type": "array", "items": { "type": "string" } },
+        "dependencies": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  ]
+}

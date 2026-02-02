@@ -4,13 +4,13 @@
     "name": "Rand Fitzpatrick",
     "url": "https://github.com/rand"
   },
-  "description": "Disciplined Process plugin - rigorous AI-assisted development workflows",
+  "description": "Disciplined Process plugin - rigorous AI-assisted development workflows with Go validation binaries and cross-plugin event coordination",
   "plugins": [
     {
       "name": "disciplined-process",
       "source": "./disciplined-process-plugin",
-      "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, and traceable task management",
-      "version": "2.0.1"
+      "description": "A disciplined AI-assisted development workflow with specification-first development, test-driven implementation, ADRs, traceable task management, hybrid prompt+binary hooks, and cross-plugin event system",
+      "version": "2.1.0"
     }
   ]
 }

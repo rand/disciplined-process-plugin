@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "coordination/response.json",
+  "title": "ResponseEvent",
+  "allOf": [
+    { "$ref": "../event-base.json" },
+    {
+      "type": "object",
+      "required": ["type", "request_id", "success"],
+      "properties": {
+        "type": { "const": "response" },
+        "request_id": { "type": "string" },
+        "success": { "type": "boolean" },
+        "result": { "type": "object", "additionalProperties": true },
+        "error": { "type": "string" }
+      }
+    }
+  ]
+}
