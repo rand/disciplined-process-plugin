@@ -1,4 +1,0 @@
-# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/lib/providers.py
-# hypothesis_version: 6.150.2
-
-['*.md', '--json', '--label', '.', '.beads', '.chainlink', '.claude', '.dp-provider-warned', 'CLAUDE_PROJECT_DIR', 'bd', 'chainlink', 'docs', 'error', 'feedback', 'gh', 'issue', 'linear', 'list', 'number', 'ready', 'status: ready', 'sync', 'tasks']

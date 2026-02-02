@@ -1,4 +1,0 @@
-# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/lib/verification.py
-# hypothesis_version: 6.150.2
-
-[0.3, '#', '*', '-', '-* ', '...', '//', '>TODO', '>\\s*Coming soon', '>\\s*PLACEHOLDER', '>\\s*TODO', '?', 'Artifacts:', 'Errors:', 'FIXME:\\s*implement', 'Links:', 'None', 'NotImplemented', 'PLACEHOLDER', 'TODO', 'TODO:\\s*implement', 'Truths:', '[?]', '[FAIL]', '[STUB]', '[ok]', '\\breturn\\b', '^\\s*\\.\\.\\.\\s*$', '^\\s*pass\\s*$', 'artifacts', 'description', 'fail', 'failed', 'id', 'import', 'incomplete', 'links', 'missing', 'ok', 'pass', 'return\\s+(.+)', 'todo', 'truths', 'unknown', 'verified']

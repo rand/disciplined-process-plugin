@@ -1,4 +1,0 @@
-# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/lib/builtin_provider.py
-# hypothesis_version: 6.150.2
-
-['*.json', '.', '.claude', 'activeForm', 'blockedBy', 'blocks', 'description', 'id', 'pending', 'status', 'subject', 'tasks', 'w']

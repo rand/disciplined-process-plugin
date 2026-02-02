@@ -1,4 +1,0 @@
-# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/lib/degradation.py
-# hypothesis_version: 6.150.2
-
-[', ', '--porcelain', '.beads', '.claude', 'Git not found', 'Unknown', 'adversarial_review', 'auto_sync', 'available_features', 'bd', 'bd CLI not available', 'beads_daemon', 'component', 'components', 'config', 'daemon', 'git', 'git_operations', 'healthy', 'init', 'last_check', 'last_transition', 'level', 'level_description', 'lock_reason', 'locked', 'message', 'pre_commit_checks', 'recovery_attempted', 'recovery_succeeded', 'running', 'start', 'status', 'task_tracker', 'task_tracking', 'trace_markers', 'transition_reason', 'w']

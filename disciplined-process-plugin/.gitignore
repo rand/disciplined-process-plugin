@@ -1,2 +1,8 @@
 __pycache__/
 bin/
+.hypothesis/
+.coverage
+*.egg-info/
+__pycache__/
+.claude/.dp-degradation-state.json
+.claude/.dp-provider-warned
