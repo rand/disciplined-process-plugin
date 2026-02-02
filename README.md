@@ -110,14 +110,43 @@ python3 ~/.claude/scripts/merge-plugin-hooks.py
 
 ## Hooks
 
-This plugin uses Claude Code hooks to enforce the disciplined workflow:
+This plugin uses a **hybrid hook architecture** combining prompt-based hooks (for LLM judgment calls) with compiled Go binaries (for fast, deterministic validation).
 
-| Hook | Event | Purpose |
-|------|-------|---------|
-| `pre-commit-check.sh` | `PreToolUse(git commit)` | Block commits without tests/traces (strict mode) |
-| `check-trace-markers.sh` | `PostToolUse(Write)` | Warn about missing `@trace` markers |
-| `session-start.sh` | `SessionStart` | Show ready work count |
-| `pre-push-sync.sh` | `PreToolUse(git push)` | Sync task tracker before push |
+### Go Validation Binaries (v2.1.0+)
+
+Pre-compiled binaries in `bin/` provide fast validation without runtime dependencies:
+
+| Binary | Purpose |
+|--------|---------|
+| `trace-validator` | Recursively discovers test files and validates `@trace SPEC-XX.YY` markers |
+| `coverage-check` | Checks spec coverage against test traces |
+| `adr-validator` | Validates ADR format and required sections |
+| `phase-emitter` | Emits phase-transition events for cross-plugin coordination |
+
+Binaries are cross-compiled for Linux (amd64/arm64), macOS (amd64/arm64), and Windows (amd64).
+
+### Prompt-Based Hooks
+
+Prompt hooks inject context into Claude's reasoning for judgment-based enforcement (e.g., "is this commit ready?" decisions that require understanding intent).
+
+### Hook Summary
+
+| Hook | Type | Event | Purpose |
+|------|------|-------|---------|
+| `trace-validator` | Binary | `PreToolUse(git commit)` | Block commits without tests/traces (strict mode) |
+| `check-trace-markers` | Prompt | `PostToolUse(Write)` | Warn about missing `@trace` markers |
+| `phase-emitter` | Binary | `SessionStart` | Emit orient phase event, show ready work |
+| `pre-push-sync` | Prompt | `PreToolUse(git push)` | Sync task tracker before push |
+
+### Legacy Fallback
+
+To use the previous Python hook scripts instead of Go binaries:
+
+```bash
+export DP_USE_LEGACY_HOOKS=1
+```
+
+Legacy scripts are preserved in `scripts/legacy/`.
 
 ### Hook Setup
 
@@ -155,6 +184,18 @@ cat ~/.claude/settings.json | jq '.hooks | keys'
 **Commits not being blocked (strict mode):**
 1. Verify hooks point to current plugin version
 2. Check `~/.claude/settings.json` has `PreToolUse` with `Bash(git commit*)` matcher
+
+## Cross-Plugin Event System (v2.1.0+)
+
+DP emits structured JSON events that other plugins (e.g., RLM) can consume for coordination:
+
+| Event | Trigger | Consumers |
+|-------|---------|-----------|
+| `phase-transition` | Moving between DP phases | RLM (adjusts reasoning mode) |
+| `spec-review` | Spec added or modified | RLM (triggers thorough analysis) |
+| `task-update` | Task status change | Beads, external trackers |
+
+Events follow JSON Schema definitions in `schemas/events/`. Python helpers in `scripts/events/` provide `emit_event()` and `consume_event()` utilities.
 
 ## Uninstalling
 
