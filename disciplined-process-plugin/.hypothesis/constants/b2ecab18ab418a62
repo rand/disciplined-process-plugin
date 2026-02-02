@@ -1,0 +1,4 @@
+# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/adversarial_review.py
+# hypothesis_version: 6.150.2
+
+[120, 2000, 10000, '\n## Relevant Specs', '\n## Test Coverage', '## Files Changed', '$CONTEXT', '-', '--json', '--max-iterations', '--model', '--name-only', '--print', '--project-dir', '--staged', '-p', '... (diff truncated)', '=', 'HEAD', 'MEDIUM', 'Model for adversary', 'No changes to review', 'No issues found.', 'Options:', 'Project directory', "Why it's wrong:", '__main__', '`(\\w+)`', '```', '```diff', 'accepted_critiques', 'adversary.md', 'agents', 'claude', 'complete', 'diff', 'gemini-2.5-flash', 'git', 'incomplete', 'iterations', 'message', 'needs_review', 'no\\s+issues?\\s+found', 'no_changes', 'outcome', 'rejected_critiques', 'store_true', 'total_critiques']

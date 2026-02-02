@@ -1,0 +1,4 @@
+# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/lib/plan_validation.py
+# hypothesis_version: 6.150.2
+
+['===============', '@must_have:', 'Acceptance Criteria', 'Dependencies:', 'Done Criteria', 'Errors:', 'Must-Have', 'Plan Validation', 'Spec Trace', 'Success Criteria', 'Task Completeness:', 'Warnings:', '[WARN]', '[ok]', 'blockedBy', 'blocks', 'description', 'fail', 'id', 'pass', 'success\\s+criteria:', 'title', 'warn', '→ NO TASK (orphan)']

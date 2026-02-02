@@ -1,0 +1,4 @@
+# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/traceability.py
+# hypothesis_version: 6.150.2
+
+['**/*.md', '*.go', '*.js', '*.py', '*.rs', '*.ts', '*.tsx', '-', '.', ':', '<!--', '=', 'No linked issue', 'SPEC-(\\d+)', 'Spec Coverage Report', '[ ]', '[!]', '[x]', '__main__', 'bd', 'beads', 'chainlink', 'closed', 'code: -', 'docs', 'in progress', 'in_progress', 'open', 'show', 'spec', 'src', 'tests', 'tests: -']

@@ -1,0 +1,4 @@
+# file: /Users/rand/src/disciplined-process/disciplined-process-plugin/scripts/prompt_guard.py
+# hypothesis_version: 6.150.2
+
+[200, '%Y-%m-%d', '**/*.md', '.claude', '__main__', 'a', 'additionalContext', 'audit', 'docs', 'error', 'go', 'javascript', 'length', 'lib', 'prompt_preview', 'python', 'rules', 'rust', 'spec', 'timestamp', 'typescript']
