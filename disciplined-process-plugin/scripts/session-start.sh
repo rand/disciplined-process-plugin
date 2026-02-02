@@ -106,4 +106,11 @@ show_ready_work() {
 }
 
 show_ready_work
+
+# Emit initial orient phase for cross-plugin coordination
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname $(dirname $0))}"
+if [ -x "${PLUGIN_ROOT}/scripts/hook-dispatch.sh" ]; then
+    echo '{}' | "${PLUGIN_ROOT}/scripts/hook-dispatch.sh" phase-emitter 2>/dev/null || true
+fi
+
 exit 0

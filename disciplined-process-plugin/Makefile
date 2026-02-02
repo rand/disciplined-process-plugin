@@ -2,7 +2,7 @@
 GO := go
 GOFLAGS := -ldflags="-s -w" -trimpath
 
-CMDS := trace-validator coverage-check adr-validator
+CMDS := trace-validator coverage-check adr-validator phase-emitter
 
 PLATFORMS := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64 windows/amd64
 

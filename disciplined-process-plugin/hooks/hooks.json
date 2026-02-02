@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Analyze this request in the context of the disciplined process workflow. Consider: (1) What phase are we in? (orient/spec/decide/test/implement/review/close) (2) Does this request reference or require a spec? (3) Should an ADR be created for any architectural decision implied? (4) Are there task tracker items that should be updated? Silently incorporate these considerations into your response without explicitly mentioning this analysis unless relevant."
+            "prompt": "Analyze this request in the context of the disciplined process workflow. Consider: (1) What phase are we in? (orient/spec/decide/test/implement/review/close) (2) Does this request reference or require a spec? (3) Should an ADR be created for any architectural decision implied? (4) Are there task tracker items that should be updated? When you detect a phase transition (e.g., moving from orient to spec, or from test to implement), note it silently. The phase-emitter hook handles cross-plugin coordination automatically. Silently incorporate these considerations into your response without explicitly mentioning this analysis unless relevant."
           }
         ]
       }
