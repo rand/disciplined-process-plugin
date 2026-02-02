@@ -123,25 +123,24 @@ func isDocFile(path string) bool {
 func findMissingTraces(projectDir string, specRefs []string) []string {
 	var missing []string
 
-	// Find test files
-	testPatterns := []string{
-		"**/test_*.py",
-		"**/*_test.go",
-		"**/*.test.ts",
-		"**/*.test.tsx",
-		"**/*.spec.ts",
-	}
-
+	// Walk the project tree to find all test files recursively
 	var testFiles []string
-	for _, pattern := range testPatterns {
-		matches, _ := filepath.Glob(filepath.Join(projectDir, pattern))
-		testFiles = append(testFiles, matches...)
-		// Also check common test dirs
-		for _, dir := range []string{"tests", "test", "__tests__"} {
-			matches, _ = filepath.Glob(filepath.Join(projectDir, dir, pattern))
-			testFiles = append(testFiles, matches...)
+	filepath.Walk(projectDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			// Skip hidden directories and common non-test dirs
+			if info != nil && info.IsDir() {
+				base := filepath.Base(path)
+				if strings.HasPrefix(base, ".") || base == "node_modules" || base == "vendor" || base == "__pycache__" {
+					return filepath.SkipDir
+				}
+			}
+			return nil
 		}
-	}
+		if isTestFile(path) {
+			testFiles = append(testFiles, path)
+		}
+		return nil
+	})
 
 	// Read all test files and collect traces
 	tracedSpecs := make(map[string]bool)
