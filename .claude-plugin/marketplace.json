@@ -1,7 +1,7 @@
 {
   "name": "disciplined-process-plugin",
   "owner": {
-    "name": "Rand Fitzpatrick",
+    "name": "Rand Arete",
     "url": "https://github.com/rand"
   },
   "description": "Disciplined Process plugin - rigorous AI-assisted development workflows with Go validation binaries and cross-plugin event coordination",
