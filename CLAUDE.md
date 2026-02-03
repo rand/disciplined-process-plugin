@@ -95,10 +95,10 @@ bd sync
 |------|-----------|----------|----------|
 | Unit | pytest | `tests/` | Core lib well-tested |
 | Property | hypothesis | `tests/` | Traceability, config |
-| Hook scripts | - | - | Needs tests (0% coverage) |
+| Hook scripts | pytest | `tests/` | spec-info.py tested (23 tests) |
 
-**Current Status**: 197 tests passing, 33% overall coverage.
-Hook scripts (pre_commit, session_start, etc.) have 0% coverage and need tests.
+**Current Status**: 329 tests passing.
+Hook scripts partially tested (spec-info.py has full coverage; others need tests).
 
 ## Important Notes
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://claude.ai/schemas/hooks.json",
-  "description": "Disciplined process hooks - command hooks providing dynamic state context",
+  "description": "Disciplined process hooks - hybrid command + prompt hooks with rigor-aware gating",
   "hooks": {
     "SessionStart": [
       {
@@ -17,13 +17,17 @@
     ],
     "UserPromptSubmit": [
       {
-        "description": "Inject current DP phase and active task as context",
+        "description": "Inject current DP phase, active task, and rigor tier as context",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/phase-context.py\"",
             "timeout": 2000,
             "blocking": false
+          },
+          {
+            "type": "prompt",
+            "prompt": "Consider the DP phase context injected by hooks. If you're about to implement code: have tests been written first? Is there a spec for this feature? For bug fixes and trivial changes (<20 lines in familiar code), skip this check. For new features or changes >20 lines, follow the DP phase order: spec before test, test before implement."
           }
         ]
       }
@@ -42,13 +46,13 @@
       },
       {
         "matcher": "Edit(*)|Write(*)",
-        "description": "Check spec references in edited file (informational, never blocks)",
+        "description": "Phase-aware spec reference gate for implementation files",
         "hooks": [
           {
             "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/spec-info.py\"",
             "timeout": 3000,
-            "blocking": false
+            "blocking": true
           }
         ]
       },
@@ -100,6 +104,10 @@
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/session-end-check.py\"",
             "timeout": 10000,
             "blocking": false
+          },
+          {
+            "type": "prompt",
+            "prompt": "Before ending: (1) Were specs or ADRs needed but not created? (2) Were tests written before implementation? (3) Has bd sync --flush-only been run? Briefly note any gaps."
           }
         ]
       }

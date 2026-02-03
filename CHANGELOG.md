@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.2.0] - 2026-02-02
+
+### Added
+- Phase-aware spec enforcement in `spec-info.py` — blocks implementation files without SPEC references during `implement`/`review` phases when the project uses specs
+- Rigor tier system in `phase-context.py` — maps task priority to rigor (P0-1→large, P2→medium, P3-4→trivial), writes back to event file
+- Workflow-ordering prompt hook on `UserPromptSubmit` — nudges spec-before-test-before-implement for non-trivial work
+- Session compliance prompt hook on `Stop` — checks for missing specs/ADRs and unsync'd beads
+- 23 unit tests for `spec-info.py` covering all decision paths (skip, approve, deny)
+
+### Changed
+- `spec-info.py` now `blocking: true` in hooks.json — denies with actionable next steps (add trace, create spec, or downgrade rigor) instead of silently approving
+- `phase-context.py` outputs rigor tier alongside phase and task ID: `[DP phase: implement, task: DP-123, rigor: medium]`
+- Hook architecture: hybrid command + prompt hooks with rigor-aware gating (trivial work passes through, non-trivial enforced)
+
 ## [2.1.1] - 2026-02-02
 
 ### Fixed
