@@ -59,4 +59,7 @@ func emitPhase(from, to, taskID string) {
 	if err := events.Emit(event, "disciplined-process"); err != nil {
 		hookio.Debug("phase-emitter: emit error: %v", err)
 	}
+
+	// Output valid JSON for Claude Code hook compliance
+	hookio.Approve("")
 }
