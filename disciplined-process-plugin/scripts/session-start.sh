@@ -107,10 +107,7 @@ show_ready_work() {
 
 show_ready_work
 
-# Emit initial orient phase for cross-plugin coordination
-PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(dirname $(dirname $0))}"
-if [ -x "${PLUGIN_ROOT}/scripts/hook-dispatch.sh" ]; then
-    echo '{}' | "${PLUGIN_ROOT}/scripts/hook-dispatch.sh" phase-emitter 2>/dev/null || true
-fi
+# Phase-emitter runs separately as UserPromptSubmit hook.
+# Do NOT call it here — concatenating two JSON objects on stdout breaks Claude Code.
 
 exit 0

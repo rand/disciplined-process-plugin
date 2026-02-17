@@ -75,6 +75,18 @@ func SessionContext(context string) {
 	})
 }
 
+// ApproveWithContext approves and injects additional context for the specified hook event.
+// The context appears as a system reminder visible to the model.
+func ApproveWithContext(eventName, context string) {
+	WriteOutput(&HookOutput{
+		Decision: "approve",
+		HookSpecific: &HookSpecificOutput{
+			HookEventName:     eventName,
+			AdditionalContext: context,
+		},
+	})
+}
+
 func Debug(format string, args ...any) {
 	if os.Getenv("HOOK_DEBUG") == "1" {
 		fmt.Fprintf(os.Stderr, "[DEBUG] "+format+"\n", args...)

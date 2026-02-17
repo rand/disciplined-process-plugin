@@ -2,6 +2,12 @@
 """Stop command hook: report uncommitted changes and open tasks."""
 import json, sys, subprocess
 
+# Read and discard stdin to avoid broken pipe errors
+try:
+    sys.stdin.read()
+except Exception:
+    pass
+
 findings = []
 try:
     r = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, timeout=5)
@@ -26,4 +32,6 @@ except Exception:
     pass
 
 if findings:
-    json.dump({"additionalContext": "Session end: " + "; ".join(findings) + ". Consider committing, syncing (bd sync), and closing tasks."}, sys.stdout)
+    json.dump({"decision": "approve", "additionalContext": "Session end: " + "; ".join(findings) + ". Consider committing, syncing (bd sync), and closing tasks."}, sys.stdout)
+else:
+    json.dump({"decision": "approve"}, sys.stdout)
