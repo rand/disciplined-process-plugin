@@ -15,8 +15,11 @@ from tools.spec_decompose.holes import (
     RESOLUTION_METHODS,
     Hole,
     HoleKnown,
+    HoleResolution,
     HoleType,
     labels_for_type,
+    propagate_resolution,
+    refine_hole,
     resolver_for_type,
 )
 
@@ -198,3 +201,113 @@ class TestHelperFunctions:
 
     def test_resolver_for_mixed(self) -> None:
         assert resolver_for_type(HoleType.SYNTHESIS) == "mixed"
+
+
+class TestHoleResolution:
+    """Tests for hole resolution dataclass."""
+
+    def test_basic_creation(self) -> None:
+        r = HoleResolution(hole_id="H001", resolution_text="Use JWT")
+        assert r.hole_id == "H001"
+        assert r.resolution_text == "Use JWT"
+        assert r.resolved_by == "agent"
+        assert r.affected_tasks == []
+
+    def test_with_affected_tasks(self) -> None:
+        r = HoleResolution(
+            hole_id="H002",
+            resolution_text="Use Redis",
+            resolved_by="human",
+            affected_tasks=[3, 5],
+        )
+        assert r.resolved_by == "human"
+        assert r.affected_tasks == [3, 5]
+
+
+class TestPropagateResolution:
+    """Tests for Gap 4: hole resolution propagation."""
+
+    def test_removes_hole_dependency(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_holes": ["H001", "H002"], "description": "Task 1"},
+            {"number": 2, "depends_on_holes": ["H001"], "description": "Task 2"},
+        ]
+        updated = propagate_resolution("H001", "Use JWT tokens", tasks)
+        assert len(updated) == 2
+        assert "H001" not in tasks[0]["depends_on_holes"]
+        assert "H002" in tasks[0]["depends_on_holes"]
+        assert tasks[1]["depends_on_holes"] == []
+
+    def test_appends_resolution_to_description(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_holes": ["H001"], "description": "Original desc"},
+        ]
+        propagate_resolution("H001", "Use Redis for caching", tasks)
+        assert "Resolved (H001)" in tasks[0]["description"]
+        assert "Use Redis for caching" in tasks[0]["description"]
+        assert tasks[0]["description"].startswith("Original desc")
+
+    def test_no_match_returns_empty(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_holes": ["H002"], "description": "Task 1"},
+        ]
+        updated = propagate_resolution("H001", "resolution", tasks)
+        assert updated == []
+        assert tasks[0]["depends_on_holes"] == ["H002"]
+
+    def test_task_without_hole_deps_unaffected(self) -> None:
+        tasks = [
+            {"number": 1, "description": "No holes"},
+        ]
+        updated = propagate_resolution("H001", "resolution", tasks)
+        assert updated == []
+
+    def test_empty_description_gets_resolution(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_holes": ["H001"]},
+        ]
+        propagate_resolution("H001", "Answer found", tasks)
+        assert "Resolved (H001)" in tasks[0]["description"]
+
+
+class TestRefineHole:
+    """Tests for Gap 11: progressive hole refinement."""
+
+    def test_adds_refinement(self) -> None:
+        hole = {
+            "number": "H001",
+            "title": "Unknown cache strategy",
+            "known": {"constraints": []},
+        }
+        result = refine_hole(hole, "Redis preferred over Memcached")
+        assert len(result["refinements"]) == 1
+        assert result["refinements"][0]["info"] == "Redis preferred over Memcached"
+        assert result["refinements"][0]["index"] == 1
+
+    def test_multiple_refinements_accumulate(self) -> None:
+        hole = {"number": "H001", "known": {"constraints": []}}
+        refine_hole(hole, "First info")
+        refine_hole(hole, "Second info")
+        assert len(hole["refinements"]) == 2
+        assert hole["refinements"][1]["index"] == 2
+
+    def test_updates_known_constraints(self) -> None:
+        hole = {
+            "number": "H001",
+            "known": {"constraints": ["Must be fast"]},
+        }
+        refine_hole(hole, "Sub-10ms latency required")
+        constraints = hole["known"]["constraints"]
+        assert "Must be fast" in constraints
+        assert "Refined: Sub-10ms latency required" in constraints
+
+    def test_creates_known_if_missing(self) -> None:
+        hole = {"number": "H001"}
+        refine_hole(hole, "New info")
+        assert "known" in hole
+        assert "Refined: New info" in hole["known"]["constraints"]
+
+    def test_returns_same_dict(self) -> None:
+        hole = {"number": "H001", "known": {"constraints": []}}
+        result = refine_hole(hole, "info")
+        assert result is hole

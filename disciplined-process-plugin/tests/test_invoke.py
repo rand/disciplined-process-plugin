@@ -181,7 +181,7 @@ class TestInvokeViaApi:
         assert result == {"epic": {"title": "Test"}, "tasks": [], "holes": []}
         mock_client.messages.create.assert_called_once()
         call_kwargs = mock_client.messages.create.call_args[1]
-        assert call_kwargs["model"] == "claude-opus-4-20250514"
+        assert call_kwargs["model"] == "claude-opus-4-6"
         assert call_kwargs["max_tokens"] == 16384
 
     def test_model_mapping(self) -> None:
@@ -201,7 +201,7 @@ class TestInvokeViaApi:
             invoke_via_api(params)
 
         call_kwargs = mock_client.messages.create.call_args[1]
-        assert call_kwargs["model"] == "claude-sonnet-4-20250514"
+        assert call_kwargs["model"] == "claude-sonnet-4-6"
 
     def test_custom_model_passthrough(self) -> None:
         params = DecomposeParams(

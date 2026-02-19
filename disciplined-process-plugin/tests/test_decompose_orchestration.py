@@ -9,6 +9,7 @@ from typing import Any
 import pytest
 
 from tools.spec_decompose.orchestration import (
+    _detect_parallel_conflicts,
     _infer_phases,
     generate_orchestration_script,
     generate_pull_loop_script,
@@ -196,3 +197,106 @@ class TestWriteOrchestrationOutput:
         )
         paths = write_orchestration_output(data)
         assert paths[0] == Path("orchestrate.sh")
+
+
+class TestDetectParallelConflicts:
+    """Tests for Gap 10: produces/consumes conflict detection."""
+
+    def test_no_conflicts(self):
+        tasks = [
+            {"number": 1, "produces": ["src/a.py"]},
+            {"number": 2, "produces": ["src/b.py"]},
+        ]
+        groups = [{"name": "p1", "tasks": [1, 2]}]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert warnings == []
+
+    def test_detects_shared_produce(self):
+        tasks = [
+            {"number": 1, "produces": ["src/shared.py", "src/a.py"]},
+            {"number": 2, "produces": ["src/shared.py", "src/b.py"]},
+        ]
+        groups = [{"name": "p1", "tasks": [1, 2]}]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert len(warnings) == 1
+        assert "T1" in warnings[0]
+        assert "T2" in warnings[0]
+        assert "src/shared.py" in warnings[0]
+
+    def test_no_conflict_across_groups(self):
+        tasks = [
+            {"number": 1, "produces": ["src/shared.py"]},
+            {"number": 2, "produces": ["src/shared.py"]},
+        ]
+        groups = [
+            {"name": "p1", "tasks": [1]},
+            {"name": "p2", "tasks": [2]},
+        ]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert warnings == []
+
+    def test_orchestration_metadata_fallback(self):
+        tasks = [
+            {"number": 1, "orchestration": {"produces": ["src/x.py"]}},
+            {"number": 2, "orchestration": {"produces": ["src/x.py"]}},
+        ]
+        groups = [{"name": "p1", "tasks": [1, 2]}]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert len(warnings) == 1
+        assert "src/x.py" in warnings[0]
+
+    def test_empty_produces(self):
+        tasks = [
+            {"number": 1},
+            {"number": 2},
+        ]
+        groups = [{"name": "p1", "tasks": [1, 2]}]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert warnings == []
+
+    def test_multiple_conflicts_in_group(self):
+        tasks = [
+            {"number": 1, "produces": ["a.py", "b.py"]},
+            {"number": 2, "produces": ["a.py"]},
+            {"number": 3, "produces": ["b.py"]},
+        ]
+        groups = [{"name": "p1", "tasks": [1, 2, 3]}]
+        warnings = _detect_parallel_conflicts(tasks, groups)
+        assert len(warnings) == 2  # T1/T2 conflict on a.py, T1/T3 conflict on b.py
+
+
+class TestVerificationGates:
+    """Tests for Gap 5: per-task verification gates in orchestration script."""
+
+    def test_per_task_status_check(self):
+        data = _make_data(
+            tasks=[
+                {**_task(1), "acceptance_criteria": ["pytest tests/test_auth.py"]},
+            ],
+            parallel_groups=[{"name": "p1", "tasks": [1]}],
+        )
+        script = generate_orchestration_script(data)
+        assert "T1_STATUS" in script
+        assert 'not closed' in script.lower() or 'not closed' in script
+
+    def test_acceptance_test_command_in_script(self):
+        data = _make_data(
+            tasks=[
+                {**_task(1), "acceptance_criteria": ["pytest tests/test_auth.py"]},
+            ],
+            parallel_groups=[{"name": "p1", "tasks": [1]}],
+        )
+        script = generate_orchestration_script(data)
+        assert "pytest tests/test_auth.py" in script
+
+    def test_conflict_warnings_in_script(self):
+        data = _make_data(
+            tasks=[
+                {**_task(1), "produces": ["src/shared.py"]},
+                {**_task(2), "produces": ["src/shared.py"]},
+            ],
+            parallel_groups=[{"name": "p1", "tasks": [1, 2]}],
+        )
+        script = generate_orchestration_script(data)
+        assert "WARNING: File conflicts" in script
+        assert "src/shared.py" in script

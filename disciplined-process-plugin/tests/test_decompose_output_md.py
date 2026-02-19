@@ -152,6 +152,28 @@ class TestGenerateStateYaml:
         # SAMPLE_TASK has depends_on_holes: ["H001"]
         assert any(d["to"] == "H001" for d in state["dependencies"])
 
+    def test_task_status_is_not_started(self) -> None:
+        """Gap 12: status should be 'not_started' per schemas.md."""
+        text = generate_state_yaml(SAMPLE_DATA)
+        state = yaml.safe_load(text)
+        assert state["tasks"][0]["status"] == "not_started"
+        assert state["holes"][0]["status"] == "not_started"
+
+    def test_enrichment_fields(self) -> None:
+        """Gap 13: state.yaml should contain description, produces, acceptance_criteria."""
+        task_with_produces = {
+            **SAMPLE_TASK,
+            "produces": ["src/auth.py", "tests/test_auth.py"],
+        }
+        data = {**SAMPLE_DATA, "tasks": [task_with_produces]}
+        text = generate_state_yaml(data)
+        state = yaml.safe_load(text)
+        task = state["tasks"][0]
+        assert "description" in task
+        assert task["produces"] == ["src/auth.py", "tests/test_auth.py"]
+        assert "acceptance_criteria" in task
+        assert len(task["acceptance_criteria"]) == 2
+
     def test_spec_hash_from_files(self, tmp_path: Path) -> None:
         spec = tmp_path / "spec.md"
         spec.write_text("# Test spec\n")

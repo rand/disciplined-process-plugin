@@ -29,6 +29,7 @@ def _task(
     is_hole: bool = False,
     hole_type: str = "",
     blocked_by: list[str] | None = None,
+    labels: list[str] | None = None,
 ) -> TaskState:
     return TaskState(
         id=id,
@@ -38,6 +39,7 @@ def _task(
         is_hole=is_hole,
         hole_type=hole_type,
         blocked_by=blocked_by or [],
+        labels=labels or [],
     )
 
 
@@ -168,6 +170,37 @@ class TestGenerateReportMarkdown:
         md = generate_report_markdown(state)
         assert "urgent" in md.lower()
 
+    def test_key_decisions_section(self):
+        """Gap 7: Key decisions labeled tasks appear in report."""
+        state = ProjectState(
+            tasks=[
+                _task(id="1", status="closed"),
+                _task(id="2", status="closed", title="Use JWT tokens",
+                      labels=["decision"]),
+            ]
+        )
+        md = generate_report_markdown(state)
+        assert "Key Decisions Made" in md
+        assert "Use JWT tokens" in md
+
+    def test_risks_section_blocked_high_priority(self):
+        """Gap 7: High-priority blocked tasks appear as risks."""
+        state = ProjectState(
+            tasks=[
+                _task(id="1", status="open", priority=1, blocked_by=["H1"]),
+                _task(id="H1", status="open", is_hole=True),
+            ]
+        )
+        md = generate_report_markdown(state)
+        assert "Risks" in md
+
+    def test_completed_table_has_duration_column(self):
+        """Gap 6: Completed table should have Duration column."""
+        prev = ProjectState(tasks=[_task(id="1", status="open")])
+        state = ProjectState(tasks=[_task(id="1", status="closed")])
+        md = generate_report_markdown(state, prev_state=prev)
+        assert "Duration" in md
+
     def test_empty_state(self):
         state = ProjectState()
         md = generate_report_markdown(state)
@@ -189,8 +222,13 @@ class TestGenerateReportJson:
         assert report["tasks"]["total"] == 3
         assert report["tasks"]["completed"] == 1
         assert report["tasks"]["in_progress"] == 1
-        assert report["tasks"]["open"] == 1
+        assert report["tasks"]["not_started"] == 1
         assert report["epic_progress"] == pytest.approx(0.33, abs=0.01)
+        # New fields per Gap 14
+        assert report["report_number"] == 1
+        assert report["epic_title"] == "Project"
+        assert "ready_work" in report
+        assert "risks" in report
 
     def test_with_holes(self):
         state = ProjectState(
@@ -202,6 +240,7 @@ class TestGenerateReportJson:
         report = generate_report_json(state)
         assert report["holes"]["total"] == 1
         assert report["holes"]["open_blocking"] == 1
+        assert "tasks_blocked_by_holes" in report["holes"]
         assert len(report["open_holes"]) == 1
         assert report["open_holes"][0]["type"] == "research"
 

@@ -124,6 +124,83 @@ class Hole:
         }
 
 
+@dataclass
+class HoleResolution:
+    """Resolution of a hole with context for downstream tasks."""
+
+    hole_id: str
+    resolution_text: str
+    resolved_by: str = "agent"  # "agent" or "human"
+    affected_tasks: list[int] = field(default_factory=list)
+
+
+def propagate_resolution(
+    hole_id: str,
+    resolution: str,
+    tasks: list[dict],
+) -> list[dict]:
+    """Propagate hole resolution to blocked tasks.
+
+    When a hole is resolved, update all tasks that depend on it:
+    - Add resolution text to their context
+    - Remove the hole from their depends_on_holes list
+
+    Args:
+        hole_id: The resolved hole ID (e.g., "H001").
+        resolution: Resolution text to inject into task context.
+        tasks: List of task dicts to update (mutated in place).
+
+    Returns:
+        List of task dicts that were updated.
+    """
+    updated: list[dict] = []
+    for task in tasks:
+        hole_deps = task.get("depends_on_holes", [])
+        if hole_id in hole_deps:
+            # Remove the hole dependency
+            task["depends_on_holes"] = [h for h in hole_deps if h != hole_id]
+
+            # Add resolution to description context
+            resolution_note = (
+                f"\n\n---\n**Resolved ({hole_id}):** {resolution}\n---"
+            )
+            task["description"] = task.get("description", "") + resolution_note
+
+            updated.append(task)
+
+    return updated
+
+
+def refine_hole(hole: dict, new_info: str) -> dict:
+    """Progressively refine a hole with new information.
+
+    Narrows the hole's scope by adding partial answers to its
+    description. Maintains a refinement history.
+
+    Args:
+        hole: Hole dict to refine (mutated in place).
+        new_info: New information that narrows the hole.
+
+    Returns:
+        The updated hole dict.
+    """
+    refinements = hole.get("refinements", [])
+    refinements.append({
+        "info": new_info,
+        "index": len(refinements) + 1,
+    })
+    hole["refinements"] = refinements
+
+    # Update known constraints with the new info
+    known = hole.get("known", {})
+    constraints = known.get("constraints", [])
+    constraints.append(f"Refined: {new_info}")
+    known["constraints"] = constraints
+    hole["known"] = known
+
+    return hole
+
+
 def labels_for_type(hole_type: HoleType) -> list[str]:
     """Get beads labels for a hole type."""
     return BEADS_LABELS.get(hole_type, ["hole"])

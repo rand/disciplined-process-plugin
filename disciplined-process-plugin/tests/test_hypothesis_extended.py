@@ -11,9 +11,13 @@ from tools.spec_decompose.diff import (
     compute_diff,
     _match_score,
 )
-from tools.spec_decompose.graph import validate_dag, topological_sort
-from tools.spec_decompose.holes import HoleType, BEADS_LABELS, AGENT_RESOLVABLE, HUMAN_REQUIRED
-from tools.spec_decompose.orchestration import _infer_phases
+from tools.spec_decompose.graph import validate_dag, topological_sort, compute_critical_path
+from tools.spec_decompose.holes import (
+    HoleType, BEADS_LABELS, AGENT_RESOLVABLE, HUMAN_REQUIRED,
+    propagate_resolution, refine_hole,
+)
+from tools.spec_decompose.orchestration import _infer_phases, _detect_parallel_conflicts
+from tools.spec_decompose.sizing import validate_decomposition_sizing
 from tools.spec_decompose.validate import parse_decomposition_output
 from tools.shared.config import parse_interval
 from tools.progress_report.triggers import evaluate_triggers, TriggerResult
@@ -255,3 +259,130 @@ def test_validate_never_crashes_on_arbitrary_input(text: str) -> None:
     result = parse_decomposition_output(text)
     assert hasattr(result, "is_valid")
     assert isinstance(result.errors, list)
+
+
+# --- Critical path properties ---
+
+
+@st.composite
+def acyclic_dag_tasks(draw: st.DrawFn) -> list[dict]:
+    """Generate guaranteed acyclic DAG task lists."""
+    n = draw(st.integers(min_value=1, max_value=8))
+    tasks = []
+    for i in range(1, n + 1):
+        # Only depend on lower-numbered tasks (guarantees acyclicity)
+        deps = draw(st.lists(
+            st.integers(min_value=1, max_value=max(1, i - 1)).filter(lambda x, i=i: x < i),
+            max_size=min(3, i - 1),
+            unique=True,
+        )) if i > 1 else []
+        total = draw(st.integers(min_value=100, max_value=50000))
+        tasks.append({
+            "number": i,
+            "title": f"Task {i}",
+            "depends_on_tasks": deps,
+            "depends_on_holes": [],
+            "estimated_tokens": {"total": total},
+        })
+    return tasks
+
+
+@given(acyclic_dag_tasks())
+@settings(max_examples=50)
+def test_critical_path_cumulative_is_monotonic(tasks: list[dict]) -> None:
+    """Critical path cumulative tokens are monotonically non-decreasing."""
+    path = compute_critical_path(tasks, [])
+    for i in range(1, len(path)):
+        assert path[i].cumulative_tokens >= path[i - 1].cumulative_tokens
+
+
+@given(acyclic_dag_tasks())
+@settings(max_examples=50)
+def test_critical_path_is_valid_topological_order(tasks: list[dict]) -> None:
+    """Critical path respects dependency ordering."""
+    path = compute_critical_path(tasks, [])
+    task_deps = {t["number"]: set(t.get("depends_on_tasks", [])) for t in tasks}
+    path_ids = [e.task_id for e in path]
+    for i, tid in enumerate(path_ids):
+        for dep in task_deps.get(tid, set()):
+            if dep in path_ids:
+                assert path_ids.index(dep) < i, (
+                    f"Dependency {dep} appears after {tid} in critical path"
+                )
+
+
+# --- Sizing validation properties ---
+
+
+@given(acyclic_dag_tasks())
+@settings(max_examples=50)
+def test_sizing_warnings_only_for_over_budget(tasks: list[dict]) -> None:
+    """Sizing warnings should only fire for tasks exceeding the ceiling."""
+    warnings = validate_decomposition_sizing(tasks, context_window=200_000)
+    for w in warnings:
+        assert w.estimated_total > w.ceiling
+
+
+# --- Hole propagation properties ---
+
+
+@given(
+    st.text(min_size=1, max_size=10, alphabet="ABCDEFGH0123456789"),
+    st.text(min_size=1, max_size=50),
+    st.lists(
+        st.text(min_size=1, max_size=10, alphabet="ABCDEFGH0123456789"),
+        min_size=0,
+        max_size=5,
+    ),
+)
+@settings(max_examples=50)
+def test_propagate_resolution_removes_only_target(
+    hole_id: str, resolution: str, other_holes: list[str]
+) -> None:
+    """propagate_resolution removes only the target hole, not others."""
+    assume(hole_id not in other_holes)
+    all_holes = [hole_id] + other_holes
+    tasks = [{"number": 1, "depends_on_holes": list(all_holes), "description": ""}]
+    propagate_resolution(hole_id, resolution, tasks)
+    assert hole_id not in tasks[0]["depends_on_holes"]
+    for other in other_holes:
+        assert other in tasks[0]["depends_on_holes"]
+
+
+# --- Hole refinement properties ---
+
+
+@given(st.lists(st.text(min_size=1, max_size=30), min_size=1, max_size=5))
+@settings(max_examples=50)
+def test_refine_hole_accumulates(infos: list[str]) -> None:
+    """Each refinement call adds exactly one entry."""
+    hole: dict = {"number": "H1", "known": {"constraints": []}}
+    for i, info in enumerate(infos):
+        refine_hole(hole, info)
+        assert len(hole["refinements"]) == i + 1
+    assert len(hole["known"]["constraints"]) == len(infos)
+
+
+# --- Parallel conflict detection properties ---
+
+
+@given(
+    st.lists(st.text(min_size=3, max_size=20, alphabet="abcdefghijklmnop./"), min_size=0, max_size=5),
+    st.lists(st.text(min_size=3, max_size=20, alphabet="abcdefghijklmnop./"), min_size=0, max_size=5),
+)
+@settings(max_examples=50)
+def test_conflict_detection_finds_shared_files(files_a: list[str], files_b: list[str]) -> None:
+    """Conflict detection should find all shared produced files."""
+    tasks = [
+        {"number": 1, "produces": files_a},
+        {"number": 2, "produces": files_b},
+    ]
+    groups = [{"name": "p1", "tasks": [1, 2]}]
+    warnings = _detect_parallel_conflicts(tasks, groups)
+    shared = set(files_a) & set(files_b)
+    if shared:
+        assert len(warnings) > 0
+        for f in shared:
+            assert any(f in w for w in warnings)
+    else:
+        assert len(warnings) == 0

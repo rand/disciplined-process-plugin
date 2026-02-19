@@ -219,6 +219,92 @@ def check_reachability(tasks: list[dict[str, Any]]) -> list[int | str]:
     return orphaned
 
 
+@dataclass
+class CriticalPathEntry:
+    """One node on the critical path."""
+
+    task_id: int | str
+    cumulative_tokens: int
+
+
+def compute_critical_path(
+    tasks: list[dict[str, Any]],
+    holes: list[dict[str, Any]] | None = None,
+) -> list[CriticalPathEntry]:
+    """Compute the critical (longest) path through the task DAG.
+
+    Uses topological sort + longest-path DP with estimated_tokens as weight.
+
+    Args:
+        tasks: Task dicts with 'number', 'depends_on_tasks', 'estimated_tokens'.
+        holes: Optional hole dicts (treated as zero-weight nodes).
+
+    Returns:
+        Ordered list of CriticalPathEntry from root to leaf on the longest path.
+        Empty list if no tasks.
+    """
+    if not tasks:
+        return []
+
+    # Build node weights
+    weights: dict[int | str, int] = {}
+    for t in tasks:
+        weights[t["number"]] = t.get("estimated_tokens", {}).get("total", 0)
+    for h in (holes or []):
+        weights[h["number"]] = 0
+
+    # Build forward adjacency (dependency → dependent)
+    adj: dict[int | str, list[int | str]] = {nid: [] for nid in weights}
+    for t in tasks:
+        for dep in t.get("depends_on_tasks", []):
+            if dep in weights:
+                adj.setdefault(dep, []).append(t["number"])
+        for dep in t.get("depends_on_holes", []):
+            if dep in weights:
+                adj.setdefault(dep, []).append(t["number"])
+
+    # Topological order
+    try:
+        topo = topological_sort(tasks)
+    except ValueError:
+        return []
+
+    # Include holes at the front of topo if not already present
+    topo_set = set(topo)
+    for h in (holes or []):
+        if h["number"] not in topo_set:
+            topo.insert(0, h["number"])
+
+    # DP: dist[node] = max cumulative weight to reach this node
+    dist: dict[int | str, int] = {nid: weights.get(nid, 0) for nid in weights}
+    pred: dict[int | str, int | str | None] = {nid: None for nid in weights}
+
+    for node in topo:
+        for neighbor in adj.get(node, []):
+            candidate = dist[node] + weights.get(neighbor, 0)
+            if candidate > dist.get(neighbor, 0):
+                dist[neighbor] = candidate
+                pred[neighbor] = node
+
+    # Find the endpoint with maximum distance
+    if not dist:
+        return []
+    end_node = max(dist, key=lambda n: dist[n])
+
+    # Trace back from end to start
+    path: list[int | str] = []
+    current: int | str | None = end_node
+    while current is not None:
+        path.append(current)
+        current = pred.get(current)
+    path.reverse()
+
+    return [
+        CriticalPathEntry(task_id=nid, cumulative_tokens=dist[nid])
+        for nid in path
+    ]
+
+
 def topological_sort(tasks: list[dict[str, Any]]) -> list[int | str]:
     """Return task numbers in dependency-respecting order (Kahn's algorithm).
 

@@ -9,12 +9,14 @@ import pytest
 
 from tools.spec_decompose.sizing import (
     WINDOW_PRESETS,
+    SizingWarning,
     TaskEstimate,
     TokenBudget,
     compute_budget,
     estimate_task_tokens,
     should_merge,
     should_split,
+    validate_decomposition_sizing,
 )
 
 
@@ -256,6 +258,59 @@ class TestWindowPresets:
         assert WINDOW_PRESETS["claude-code"] == 200_000
         assert WINDOW_PRESETS["codex"] == 128_000
         assert WINDOW_PRESETS["parallel"] == 64_000
+
+
+class TestValidateDecompositionSizing:
+    """Tests for post-hoc sizing validation (Gap 8)."""
+
+    def test_under_budget_no_warnings(self) -> None:
+        tasks = [
+            {"number": 1, "title": "Small task",
+             "estimated_tokens": {"total": 10000, "overhead": 3000}},
+        ]
+        warnings = validate_decomposition_sizing(tasks)
+        assert warnings == []
+
+    def test_over_total_ceiling_warns(self) -> None:
+        tasks = [
+            {"number": 1, "title": "Huge task",
+             "estimated_tokens": {"total": 200_000, "overhead": 5000}},
+        ]
+        warnings = validate_decomposition_sizing(tasks, context_window=200_000)
+        assert len(warnings) == 1
+        assert "total ceiling" in warnings[0].message
+        assert warnings[0].task_number == 1
+
+    def test_over_overhead_ceiling_warns(self) -> None:
+        tasks = [
+            {"number": 2, "title": "Heavy context task",
+             "estimated_tokens": {"total": 50_000, "overhead": 35_000}},
+        ]
+        warnings = validate_decomposition_sizing(tasks, context_window=200_000)
+        assert len(warnings) == 1
+        assert "overhead ceiling" in warnings[0].message
+
+    def test_multiple_warnings(self) -> None:
+        tasks = [
+            {"number": 1, "title": "OK",
+             "estimated_tokens": {"total": 10_000, "overhead": 3000}},
+            {"number": 2, "title": "Too big",
+             "estimated_tokens": {"total": 200_000, "overhead": 5000}},
+            {"number": 3, "title": "Also too big",
+             "estimated_tokens": {"total": 180_000, "overhead": 5000}},
+        ]
+        warnings = validate_decomposition_sizing(tasks)
+        assert len(warnings) == 2
+
+    def test_small_window_stricter(self) -> None:
+        tasks = [
+            {"number": 1, "title": "Medium task",
+             "estimated_tokens": {"total": 60_000, "overhead": 5000}},
+        ]
+        # Under 200K budget but over 64K budget
+        assert validate_decomposition_sizing(tasks, 200_000) == []
+        warnings = validate_decomposition_sizing(tasks, 64_000)
+        assert len(warnings) == 1
 
 
 # Property-based tests

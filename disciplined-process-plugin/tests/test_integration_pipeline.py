@@ -14,7 +14,7 @@ import pytest
 
 from tools.spec_decompose.analyzer import read_spec_files
 from tools.spec_decompose.validate import parse_decomposition_output
-from tools.spec_decompose.graph import validate_dag, check_coverage, topological_sort
+from tools.spec_decompose.graph import validate_dag, check_coverage, topological_sort, compute_critical_path
 from tools.spec_decompose.output_beads import (
     generate_plan_markdown,
     generate_plan_script,
@@ -540,3 +540,134 @@ class TestProgressReport:
         # 8. Verify symlink
         latest = report_dir / "latest.md"
         assert latest.exists()
+
+
+class TestNewGapFeatures:
+    """Integration tests for features added in v2.3.0 (Gaps 1-15)."""
+
+    def test_critical_path_in_plan(self, tmp_path: Path) -> None:
+        """Critical path analysis appears in beads plan output."""
+        plan_md, plan_sh = write_beads_output(
+            FIXTURE_DECOMPOSITION,
+            output_dir=tmp_path,
+        )
+        md = plan_md.read_text()
+        assert "Critical Path Analysis" in md
+        assert "Cumulative Tokens" in md
+
+    def test_critical_path_correct(self) -> None:
+        """Critical path follows longest dependency chain."""
+        tasks = FIXTURE_DECOMPOSITION["tasks"]
+        holes = FIXTURE_DECOMPOSITION["holes"]
+        path = compute_critical_path(tasks, holes)
+        assert len(path) >= 2
+        # Path should include task 3 (depends on 1 + 2) or task 4 (depends on 3)
+        path_ids = [e.task_id for e in path]
+        assert 4 in path_ids  # Task 4 is on the longest chain (1->3->4 or 2->3->4)
+        # Cumulative tokens should be monotonically increasing
+        for i in range(1, len(path)):
+            assert path[i].cumulative_tokens >= path[i - 1].cumulative_tokens
+
+    def test_sizing_validation_warns_on_large_task(self) -> None:
+        """Post-hoc sizing validates task token budgets."""
+        from tools.spec_decompose.sizing import validate_decomposition_sizing
+
+        # The fixture task 3 has 30,500 tokens — should be within budget for 200K window
+        warnings = validate_decomposition_sizing(
+            FIXTURE_DECOMPOSITION["tasks"], context_window=200_000
+        )
+        assert isinstance(warnings, list)
+
+        # With a tiny window, should produce warnings
+        small_warnings = validate_decomposition_sizing(
+            FIXTURE_DECOMPOSITION["tasks"], context_window=10_000
+        )
+        assert len(small_warnings) > 0
+
+    def test_orchestration_verification_gates(self, tmp_path: Path) -> None:
+        """Orchestration script includes per-task verification gates."""
+        paths = write_orchestration_output(
+            FIXTURE_DECOMPOSITION,
+            output_dir=tmp_path,
+            include_pull_loop=True,
+        )
+        orch = paths[0].read_text()
+        # Should check task closed status after each phase
+        assert "T1_STATUS" in orch or "T2_STATUS" in orch or "T5_STATUS" in orch
+        assert "not closed" in orch.lower() or "not closed" in orch
+
+    def test_orchestration_conflict_detection(self, tmp_path: Path) -> None:
+        """Orchestration detects file conflicts in parallel groups."""
+        # Modify fixture: make two foundation tasks produce same file
+        import copy
+        data = copy.deepcopy(FIXTURE_DECOMPOSITION)
+        data["tasks"][0]["produces"] = ["src/shared.py"]
+        data["tasks"][1]["produces"] = ["src/shared.py"]
+
+        paths = write_orchestration_output(data, output_dir=tmp_path)
+        orch = paths[0].read_text()
+        assert "WARNING: File conflicts" in orch
+        assert "src/shared.py" in orch
+
+    def test_enriched_state_yaml_round_trip(self, tmp_path: Path) -> None:
+        """State.yaml preserves description, produces, acceptance_criteria."""
+        import yaml
+        write_markdown_output(
+            FIXTURE_DECOMPOSITION,
+            output_dir=tmp_path / "tasks",
+            spec_files=["docs/spec/auth.md"],
+        )
+        state_path = tmp_path / "tasks" / "state.yaml"
+        state = yaml.safe_load(state_path.read_text())
+
+        # Check enriched fields
+        task1 = state["tasks"][0]
+        assert task1["description"] == "Set up Google and GitHub OAuth providers."
+        assert task1["produces"] == ["src/auth/oauth.py"]
+        assert "OAuth config loads from env vars" in task1["acceptance_criteria"]
+        assert task1["status"] == "not_started"
+
+        # Round-trip through diff snapshot
+        existing = snapshot_from_state_yaml(state_path)
+        t1_snap = next(s for s in existing if s.id == "1")
+        assert t1_snap.description == "Set up Google and GitHub OAuth providers."
+        assert t1_snap.produces == ["src/auth/oauth.py"]
+        assert t1_snap.status == "open"  # Normalized from not_started
+
+    def test_hole_resolution_propagation(self) -> None:
+        """Hole resolution propagates to blocked tasks."""
+        from tools.spec_decompose.holes import propagate_resolution
+
+        tasks = [
+            {"number": 3, "depends_on_holes": ["H001"], "description": "Token exchange"},
+            {"number": 4, "depends_on_holes": [], "description": "Session mgmt"},
+        ]
+        updated = propagate_resolution("H001", "Use eager invalidation", tasks)
+        assert len(updated) == 1
+        assert "Resolved (H001)" in tasks[0]["description"]
+        assert tasks[0]["depends_on_holes"] == []
+        assert tasks[1]["description"] == "Session mgmt"  # Unaffected
+
+    def test_report_json_schema_fields(self, tmp_path: Path) -> None:
+        """Report JSON includes all required schema fields."""
+        from tools.progress_report.extractor import ProjectState, TaskState
+
+        state = ProjectState(
+            tasks=[
+                TaskState(id="1", title="Done", status="closed"),
+                TaskState(id="2", title="Ready", status="open"),
+                TaskState(
+                    id="H1", title="Hole", status="open",
+                    is_hole=True, hole_type="research",
+                ),
+            ]
+        )
+        report = generate_report_json(state, trigger_reason="test")
+        # Gap 14 fields
+        assert "report_number" in report
+        assert "epic_title" in report
+        assert "ready_work" in report
+        assert "risks" in report
+        assert "holes" in report
+        assert "tasks_blocked_by_holes" in report["holes"]
+        assert report["tasks"]["not_started"] == 1

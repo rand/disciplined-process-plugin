@@ -150,6 +150,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Read decomposition from a JSON file instead of invoking the subagent",
     )
 
+    parser.add_argument(
+        "--api",
+        action="store_true",
+        help="Invoke decomposer via the Anthropic API (requires ANTHROPIC_API_KEY)",
+    )
+
     return parser
 
 
@@ -208,19 +214,33 @@ def main(argv: list[str] | None = None) -> int:
             existing_code_path=str(args.existing_code) if args.existing_code else None,
         )
 
-        # Print the subagent prompt for manual invocation
-        prompt = build_subagent_prompt(params)
-        print(f"\nDecomposition prompt ({len(prompt):,} chars).")
-        print("Invoke the decomposer subagent with this prompt, then provide")
-        print("the JSON output via --json-input.\n")
-        print("For Claude Code: use Task tool with subagent_type=decomposer")
-        print("For API: use spec-decompose with anthropic SDK (pip install anthropic)")
+        if args.api:
+            # Invoke decomposer via Anthropic API
+            from tools.spec_decompose.invoke import invoke_via_api
 
-        # Save prompt for reference
-        prompt_path = Path("decompose-prompt.md")
-        prompt_path.write_text(prompt)
-        print(f"\nPrompt saved to {prompt_path}")
-        return 0
+            try:
+                print("Invoking decomposer via Anthropic API...")
+                data = invoke_via_api(params)
+            except ImportError as e:
+                print(f"Error: {e}", file=sys.stderr)
+                return 1
+            except Exception as e:
+                print(f"API invocation failed: {e}", file=sys.stderr)
+                return 1
+        else:
+            # Print the subagent prompt for manual invocation
+            prompt = build_subagent_prompt(params)
+            print(f"\nDecomposition prompt ({len(prompt):,} chars).")
+            print("Invoke the decomposer subagent with this prompt, then provide")
+            print("the JSON output via --json-input.\n")
+            print("For Claude Code: use Task tool with subagent_type=decomposer")
+            print("For API: spec-decompose --api (pip install anthropic)")
+
+            # Save prompt for reference
+            prompt_path = Path("decompose-prompt.md")
+            prompt_path.write_text(prompt)
+            print(f"\nPrompt saved to {prompt_path}")
+            return 0
 
     # Validate the decomposition
     result = parse_decomposition_output(json.dumps(data))
@@ -246,6 +266,12 @@ def main(argv: list[str] | None = None) -> int:
         for e in dag_errors:
             print(f"  - {e}", file=sys.stderr)
         return 1
+
+    # Post-hoc sizing validation (Gap 8)
+    from tools.spec_decompose.sizing import validate_decomposition_sizing
+    sizing_warnings = validate_decomposition_sizing(tasks, args.context_window)
+    for sw in sizing_warnings:
+        print(f"Sizing warning: {sw.message}", file=sys.stderr)
 
     # Dry run: just show the plan
     if args.dry_run:
@@ -303,7 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     # Generate output
     if args.output == "beads":
         plan_md, plan_sh = write_beads_output(
-            data, epic_title=args.epic_title
+            data, output_dir=args.dir, epic_title=args.epic_title
         )
         print(f"Plan: {plan_md}")
         print(f"Script: {plan_sh}")

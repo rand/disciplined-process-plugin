@@ -12,7 +12,9 @@ import pytest
 from tools.spec_decompose.analyzer import (
     SpecBundle,
     SpecFile,
+    SpecShard,
     read_spec_files,
+    shard_spec,
 )
 
 
@@ -87,3 +89,38 @@ class TestReadSpecFiles:
         spec.write_text("[SPEC-01.01] First mention\n[SPEC-01.01] Second mention\n")
         bundle = read_spec_files([spec])
         assert bundle.all_spec_ids.count("SPEC-01.01") == 1
+
+
+class TestShardSpec:
+    """Tests for spec sharding (Gap 9)."""
+
+    def test_small_spec_single_shard(self) -> None:
+        text = "# Small spec\nSome content\n"
+        shards = shard_spec(text, max_tokens=150_000)
+        assert len(shards) == 1
+        assert shards[0].content == text
+
+    def test_large_spec_multiple_shards(self) -> None:
+        # Create a spec that's large enough to exceed max_tokens
+        sections = []
+        for i in range(50):
+            sections.append(f"## Section {i}\n" + "word " * 500 + "\n")
+        text = "\n".join(sections)
+        shards = shard_spec(text, max_tokens=1000)
+        assert len(shards) > 1
+        # First shard should be the overview
+        assert shards[0].is_overview
+
+    def test_overview_shard_is_first(self) -> None:
+        sections = [f"## Section {i}\n" + "content " * 200 + "\n" for i in range(10)]
+        text = "\n".join(sections)
+        shards = shard_spec(text, max_tokens=500)
+        assert shards[0].is_overview
+        assert shards[0].index == 0
+
+    def test_all_content_preserved(self) -> None:
+        text = "## A\nContent A\n\n## B\nContent B\n"
+        shards = shard_spec(text, max_tokens=150_000)
+        combined = "\n".join(s.content for s in shards)
+        assert "Content A" in combined
+        assert "Content B" in combined

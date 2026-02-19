@@ -92,6 +92,13 @@ def evaluate_triggers(
             fired.append("epic_milestone")
             reasons.append(f"Epic milestone: {milestone}%")
 
+    # Event-based: on_rework (new tasks with rework indicators)
+    if config.on_rework:
+        rework_tasks = _check_rework(prev_state, curr_state)
+        if rework_tasks:
+            fired.append("on_rework")
+            reasons.append(f"{len(rework_tasks)} rework task(s) created")
+
     # Event-based: on_failure (tasks moved to a failed state)
     # Note: Beads doesn't have a "failed" status, but we detect it via
     # tasks that were in_progress and are now open again
@@ -199,6 +206,24 @@ def _check_resolved_holes(
         t.id for t in curr.tasks if t.is_hole and t.status == "closed"
     }
     return list(prev_open_hole_ids & curr_closed_hole_ids)
+
+
+def _check_rework(
+    prev: ProjectState, curr: ProjectState
+) -> list[str]:
+    """Return IDs of newly created rework tasks.
+
+    Detects rework by checking for new tasks that have 'rework' in
+    their title (case-insensitive) or have a discovered-from dependency type.
+    """
+    prev_ids = {t.id for t in prev.tasks}
+    rework_ids: list[str] = []
+    for t in curr.tasks:
+        if t.id not in prev_ids:
+            title_lower = t.title.lower()
+            if "rework" in title_lower or "discovered-from" in title_lower:
+                rework_ids.append(t.id)
+    return rework_ids
 
 
 def should_deduplicate(
