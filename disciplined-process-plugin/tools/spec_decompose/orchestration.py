@@ -244,6 +244,7 @@ def write_orchestration_output(
     """
     if output_dir is None:
         output_dir = Path(".")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     paths: list[Path] = []
 
