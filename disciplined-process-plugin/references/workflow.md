@@ -18,6 +18,7 @@ The canonical reference for the 7-phase development loop.
 │    /dp:spec create <section> "<title>"                      │
 │    /dp:spec add <section> "<requirement>"                   │
 │    /dp:spec link <spec-id> <issue-id>                       │
+│    /dp:decompose docs/spec/<section>.md  (large features)   │
 ├─────────────────────────────────────────────────────────────┤
 │ 3. DECIDE   → Create ADR if architectural choice needed     │
 │    /dp:adr create "<decision title>"                        │
@@ -36,6 +37,7 @@ The canonical reference for the 7-phase development loop.
 │ 7. CLOSE    → Complete task, commit with ID                 │
 │    /dp:task close <id> --reason "Done"                      │
 │    git commit -m "feat: <desc> (<task-id>)"                 │
+│    /dp:progress --trigger "Completed <task-id>"             │
 │    /dp:session end --notes "Handoff context"  (Chainlink)   │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -68,6 +70,12 @@ Define WHAT, not HOW:
 - Each requirement is a single, testable statement
 - Use `/dp:spec create` and `/dp:spec add`
 - Link specs to issues: `/dp:spec link SPEC-01.03 <issue-id>`
+
+For large features, decompose specs into dependency-aware work items:
+- `/dp:decompose docs/spec/<section>.md` — generate task graph from specs
+- Review `decompose-plan.md`, then execute `bash decompose-plan.sh`
+- Holes (ambiguities) become blocking issues that must be resolved before downstream work
+- See `/dp:decompose --help` for diff mode, orchestration, and sizing options
 
 ### 3. Decide
 
@@ -109,6 +117,7 @@ Complete the work:
 - Close task: `/dp:task close <id> --reason "<reason>"`
 - Commit with task reference: `git commit -m "feat: <desc> (<task-id>)"`
 - File any discovered work: `/dp:task discover "<title>" --from <id>`
+- Generate progress report: `/dp:progress --trigger "Completed <task-id>"`
 - End session: `/dp:session end --notes "Handoff context"` (Chainlink)
 
 ## Quick Reference
@@ -121,6 +130,7 @@ Complete the work:
 | Orient | `/dp:session work <id>` | Claim + start timer (Chainlink) |
 | Specify | `/dp:spec add <section> "<req>"` | Add requirement |
 | Specify | `/dp:spec link <spec> <issue>` | Link spec to issue |
+| Specify | `/dp:decompose <spec-files>` | Decompose spec into tasks (large features) |
 | Decide | `/dp:adr create "<title>"` | Record decision |
 | Test | Write tests with `@trace SPEC-XX.YY` | Verify specs |
 | Implement | Code with `@trace SPEC-XX.YY` | Fulfill specs |
@@ -128,6 +138,8 @@ Complete the work:
 | Review | `/dp:review --adversarial` | VDD-style deep review |
 | Review | `/dp:trace coverage` | Verify spec coverage |
 | Close | `/dp:task close <id>` | Complete work |
+| Close | `/dp:progress` | Generate progress report |
+| Close | `/dp:progress --watch` | Daemon mode for ongoing reporting |
 | Close | `/dp:session end --notes "..."` | Save handoff context (Chainlink) |
 
 ## Traceability

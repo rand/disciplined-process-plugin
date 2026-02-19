@@ -25,6 +25,8 @@
 | SPEC-04 | Code Review | `04-code-review.md` |
 | SPEC-05 | Goal-Backward Verification | `05-verification.md` |
 | SPEC-06 | Plan Validation | `06-plan-validation.md` |
+| SPEC-07 | Spec Decomposition | `07-spec-decomposition.md` |
+| SPEC-08 | Progress Reporting | `08-progress-reporting.md` |
 
 ## Definitions
 

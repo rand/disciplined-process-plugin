@@ -89,10 +89,18 @@ See [full documentation](./disciplined-process-plugin/README.md) for detailed us
 | Command | Description |
 |---------|-------------|
 | `/dp:init` | Initialize project with interactive wizard |
-| `/dp:task` | Task tracking (ready, create, show, update, close) |
+| `/dp:task` | Task tracking (ready, create, show, update, close, discover) |
 | `/dp:spec` | Specification management (create, add, coverage) |
 | `/dp:adr` | Architecture Decision Records |
 | `/dp:review` | Code review checklist |
+| `/dp:verify` | Goal-backward verification |
+| `/dp:trace` | Traceability validation |
+| `/dp:decompose` | Decompose specs into work items |
+| `/dp:progress` | Generate progress reports |
+| `/dp:session` | Session management |
+| `/dp:migrate` | Migrate between task trackers |
+| `/dp:status` | Show degradation status |
+| `/dp:health` | System health and diagnostics |
 | `/dp:help` | Help and workflow reference |
 
 ## Updating

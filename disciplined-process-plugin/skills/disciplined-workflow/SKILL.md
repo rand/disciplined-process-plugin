@@ -23,6 +23,13 @@ For any non-trivial work, follow the 7-phase loop:
 
 See `references/workflow.md` for the full workflow reference with commands.
 
+### Scaling Up
+
+For large features (multi-file, multi-task), use these tools to manage complexity:
+
+- **Spec Decomposition** (`/dp:decompose`): Transforms specs into dependency-aware, context-window-sized work items. Ambiguities become first-class "holes" that block downstream work. Use after the Specify phase for feature-scale work.
+- **Progress Reporting** (`/dp:progress`): Generates structured reports from Beads and git state. Reports serve both humans (status updates, action items) and AI agents (context recovery for fresh sessions via `docs/progress/latest.md`). Use during Close phase or in watch mode for ongoing projects.
+
 ## Workflow Integration
 
 ### Starting Work
@@ -100,5 +107,6 @@ This workflow supports three enforcement levels (configured in `.claude/settings
 ## Related Skills
 
 - **spec-tracing**: Detailed specification format and traceability
-- **tdd-methodology**: Test-first patterns for different test types  
+- **tdd-methodology**: Test-first patterns for different test types
 - **adr-authoring**: Architecture Decision Record format and process
+- **task-executor**: Working from decomposed task files or Beads issues created by spec-decompose

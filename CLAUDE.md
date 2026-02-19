@@ -11,21 +11,31 @@ Claude Code plugin for enforcing disciplined, traceable AI-assisted development 
 
 ```
 disciplined-process-plugin/
-├── commands/           # /dp:* command definitions (markdown)
+├── commands/           # /dp:* command definitions (17 markdown files)
 ├── scripts/            # Hook implementations (Python)
-│   └── lib/            # Core library (tested)
-│       ├── config.py       # Configuration v1/v2 with migration
-│       ├── degradation.py  # Graceful degradation framework
-│       ├── providers.py    # Task tracker detection
-│       ├── verification.py # Goal-backward verification
-│       ├── plan_validation.py
-│       ├── builtin_provider.py
-│       └── traceability.py
+│   ├── lib/            # Core library (tested)
+│   │   ├── config.py       # Configuration v1/v2 with migration
+│   │   ├── degradation.py  # Graceful degradation framework
+│   │   ├── providers.py    # Task tracker detection
+│   │   ├── verification.py # Goal-backward verification
+│   │   ├── plan_validation.py
+│   │   ├── builtin_provider.py
+│   │   └── traceability.py
+│   ├── events/         # Cross-plugin event emission/consumption
+│   └── legacy/         # v1 Python hooks (preserved)
+├── tools/              # CLI tools
+│   ├── spec_decompose/ # Spec decomposition engine
+│   ├── progress_report/# Progress reporting tool
+│   └── shared/         # Shared utilities
+├── bin/                # Pre-compiled Go binaries (cross-platform)
+├── cmd/                # Go source for binaries
 ├── docs/
 │   ├── spec/           # Specifications [SPEC-XX.YY]
 │   └── adr/            # Architecture Decision Records
-├── agents/             # Agent definitions (adversary.md)
-├── skills/             # Skill definitions
+├── agents/             # Agent definitions (3 agents)
+├── skills/             # Skill definitions (5 skills)
+├── schemas/            # JSON schemas for events
+├── references/         # Workflow and config guides
 ├── assets/templates/   # Project templates
 └── tests/              # Pytest + Hypothesis
 ```
@@ -37,7 +47,7 @@ disciplined-process-plugin/
 cd disciplined-process-plugin && source .venv/bin/activate && pytest tests/ -v
 
 # Test (with coverage)
-cd disciplined-process-plugin && source .venv/bin/activate && pytest tests/ --cov=scripts
+cd disciplined-process-plugin && source .venv/bin/activate && pytest tests/ --cov=scripts --cov=tools
 
 # Lint
 ruff check disciplined-process-plugin/
@@ -62,14 +72,14 @@ This project uses the **disciplined process** workflow (dogfooding):
 
 Specifications are in `disciplined-process-plugin/docs/spec/`:
 - `00-overview.md` - Meta-specification and terminology
+- `01-task-tracking.md` - Task tracking integration
+- `02-specifications.md` - Specification format and traceability
+- `03-architecture-decisions.md` - ADR system
+- `04-code-review.md` - Code review requirements
 - `05-verification.md` - Goal-backward verification system
 - `06-plan-validation.md` - Pre-execution plan validation
-
-**Missing** (tracked in beads):
-- SPEC-01: Task Tracking
-- SPEC-02: Specifications and Traceability
-- SPEC-03: Architecture Decision Records
-- SPEC-04: Code Review
+- `07-spec-decomposition.md` - Spec decomposition into dependency-aware work items
+- `08-progress-reporting.md` - Structured progress reporting and broadcasting
 
 ## Task Tracking
 
@@ -97,14 +107,14 @@ bd sync
 | Property | hypothesis | `tests/` | Traceability, config |
 | Hook scripts | pytest | `tests/` | spec-info.py tested (23 tests) |
 
-**Current Status**: 329 tests passing.
+**Current Status**: 776 tests passing.
 Hook scripts partially tested (spec-info.py has full coverage; others need tests).
 
 ## Important Notes
 
 - **Graceful Degradation**: Plugin never blocks on errors; degrades gracefully
 - **Provider Support**: Beads (primary), Builtin, Chainlink, GitHub, Linear, Markdown, None
-- **Python Version**: 3.12+
+- **Python Version**: 3.10+
 - **Dependencies**: See `pyproject.toml` (hypothesis, pytest, etc.)
 
 ---

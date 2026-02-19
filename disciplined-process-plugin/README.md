@@ -2,7 +2,7 @@
 
 A rigorous, traceable AI-assisted development workflow for Claude Code. Inspired by the [Rue language](https://github.com/rue-language/rue) development process.
 
-**Version:** 2.0.0
+**Version:** 2.3.0
 
 See the [project README](../README.md) for overview and installation.
 
@@ -172,13 +172,6 @@ project:
 
 # Issue tracker selection
 task_tracker: beads  # beads | builtin | chainlink | github | linear | markdown | none
-
-# Beads-specific configuration
-beads:
-  auto_sync: true
-    milestones: true
-    time_tracking: true
-  rules_path: .claude/rules/
 
 # Beads-specific configuration (when task_tracker: beads)
 beads:

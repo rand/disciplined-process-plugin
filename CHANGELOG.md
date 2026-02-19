@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.0] - 2026-02-19
+
+### Added
+- Spec decomposition tool (`spec-decompose`) for analyzing tasks and generating implementation plans
+- Progress reporting tool (`progress-report`) for tracking and broadcasting task completion
+- All 7 specification documents now complete (SPEC-00 through SPEC-06)
+- E2E validation pipeline tests
+- Property tests (hypothesis) for v2.3.0 features
+
+### Fixed
+- E2E validation bugs in spec-implementation gap analysis
+
+### Changed
+- Test count increased from ~329 to 776
+
 ## [2.2.0] - 2026-02-02
 
 ### Added
