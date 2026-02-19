@@ -82,10 +82,13 @@ def generate_report_markdown(
         if newly_completed:
             lines.append("### Completed")
             lines.append("")
-            lines.append("| Task | Status |")
-            lines.append("|------|--------|")
+            lines.append("| Task | Duration | Tokens |")
+            lines.append("|------|----------|--------|")
             for t in newly_completed:
-                lines.append(f"| {t.id}: {t.title} | Completed |")
+                duration = _format_duration(t, last_report_time)
+                lines.append(
+                    f"| {t.id}: {t.title} | {duration} | ~est |"
+                )
             lines.append("")
 
         # New issues discovered
@@ -99,6 +102,16 @@ def generate_report_markdown(
             for t in new_tasks:
                 lines.append(f"| {t.id}: {t.title} | P{t.priority} |")
             lines.append("")
+
+    # Key Decisions Made (Gap 7)
+    decisions = [t for t in state.tasks if not t.is_hole
+                 and "decision" in [l.lower() for l in t.labels]]
+    if decisions:
+        lines.append("## Key Decisions Made")
+        lines.append("")
+        for d in decisions:
+            lines.append(f"- {d.id}: {d.title}")
+        lines.append("")
 
     # Holes section
     if state.total_holes > 0:
@@ -173,6 +186,24 @@ def generate_report_markdown(
             lines.append(f"| {t.id}: {t.title} | {blockers} |")
         lines.append("")
 
+    # Warnings (Gap 7)
+    warnings = _compute_warnings(state)
+    if warnings:
+        lines.append("### Warnings")
+        lines.append("")
+        for w in warnings:
+            lines.append(f"- {w}")
+        lines.append("")
+
+    # Risks (Gap 7)
+    risks = _compute_risks(state)
+    if risks:
+        lines.append("### Risks")
+        lines.append("")
+        for r in risks:
+            lines.append(f"- {r}")
+        lines.append("")
+
     # Files changed
     if state.git.files_changed:
         lines.append("## Files Changed")
@@ -212,6 +243,8 @@ def generate_report_json(
     state: ProjectState,
     trigger_reason: str = "on_demand",
     prev_state: ProjectState | None = None,
+    report_number: int = 1,
+    epic_title: str = "Project",
 ) -> dict[str, Any]:
     """Generate machine-readable progress report.
 
@@ -219,6 +252,8 @@ def generate_report_json(
         state: Current project state.
         trigger_reason: Why this report was generated.
         prev_state: For computing deltas.
+        report_number: Sequential report number.
+        epic_title: Title for the epic.
 
     Returns:
         Dict matching the Progress Report JSON schema.
@@ -239,8 +274,23 @@ def generate_report_json(
         prev_ids = {t.id for t in prev_state.tasks}
         discovered = [t.id for t in state.tasks if t.id not in prev_ids]
 
+    # Compute tasks blocked by holes
+    hole_ids = {t.id for t in state.tasks if t.is_hole and t.status != "closed"}
+    tasks_blocked_by_holes = len([
+        t for t in state.tasks
+        if not t.is_hole and any(b in hole_ids for b in t.blocked_by)
+    ])
+
+    # Risks: tasks on critical path blocked by incomplete work
+    risks: list[str] = []
+    for t in state.blocked_tasks:
+        if t.priority <= 1:
+            risks.append(f"high_priority_blocked:{t.id}")
+
     return {
         "timestamp": now.isoformat(),
+        "report_number": report_number,
+        "epic_title": epic_title,
         "trigger": trigger_reason,
         "epic_progress": round(state.progress_ratio, 2),
         "tasks": {
@@ -249,24 +299,31 @@ def generate_report_json(
             "in_progress": state.in_progress_tasks,
             "blocked": len(state.blocked_tasks),
             "ready": len(state.ready_tasks),
-            "open": state.open_tasks,
+            "not_started": state.open_tasks,
         },
         "holes": {
             "total": state.total_holes,
             "resolved": len(state.resolved_holes),
             "open_blocking": len(state.open_holes),
+            "tasks_blocked_by_holes": tasks_blocked_by_holes,
         },
         "ready_task_ids": [t.id for t in state.ready_tasks],
+        "ready_work": [
+            {"id": t.id, "title": t.title, "priority": t.priority}
+            for t in state.ready_tasks
+        ],
         "recently_completed": recently_completed,
         "discovered_issues": discovered,
         "open_holes": [
             {
                 "id": h.id,
                 "type": h.hole_type,
+                "blocks": h.blocked_by,
                 "urgency": "high" if h.priority <= 1 else "medium",
             }
             for h in state.open_holes
         ],
+        "risks": risks,
         "files_changed": state.git.files_changed[:20],
     }
 
@@ -325,11 +382,57 @@ def write_report(
         latest_md.write_text(md_content)
 
     # Write JSON
-    json_data = generate_report_json(state, trigger_reason, prev_state)
+    json_data = generate_report_json(
+        state, trigger_reason, prev_state,
+        report_number=report_number, epic_title=epic_title,
+    )
     json_path = output_dir / "latest.json"
     json_path.write_text(json.dumps(json_data, indent=2))
 
     return md_path, json_path
+
+
+def _compute_warnings(state: ProjectState) -> list[str]:
+    """Compute warning items from current state."""
+    warnings: list[str] = []
+    # Tasks stuck in_progress with no recent commits
+    in_progress = [t for t in state.tasks if t.status == "in_progress" and not t.is_hole]
+    if len(in_progress) > 3:
+        warnings.append(
+            f"{len(in_progress)} tasks in progress simultaneously — consider focusing"
+        )
+    return warnings
+
+
+def _compute_risks(state: ProjectState) -> list[str]:
+    """Compute risk items from current state."""
+    risks: list[str] = []
+    # High-priority blocked tasks are risks
+    for t in state.blocked_tasks:
+        if t.priority <= 1:
+            risks.append(f"High-priority task {t.id} ({t.title}) is blocked")
+    # All work blocked by holes
+    if state.all_work_hole_blocked:
+        risks.append("All remaining work blocked by holes — human intervention required")
+    return risks
+
+
+def _format_duration(
+    task: TaskState, reference_time: datetime | None = None
+) -> str:
+    """Format duration for a completed task."""
+    if task.closed_at:
+        try:
+            closed = datetime.fromisoformat(task.closed_at)
+            if reference_time:
+                delta = closed - reference_time
+                minutes = int(delta.total_seconds() / 60)
+                if minutes < 60:
+                    return f"{minutes}m"
+                return f"{minutes // 60}h {minutes % 60}m"
+        except (ValueError, TypeError):
+            pass
+    return "—"
 
 
 def _compute_action_items(state: ProjectState) -> list[str]:

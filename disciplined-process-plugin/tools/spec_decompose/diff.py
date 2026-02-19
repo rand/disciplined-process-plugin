@@ -164,23 +164,31 @@ def snapshot_from_state_yaml(state_path: Path) -> list[WorkItemSnapshot]:
     snapshots: list[WorkItemSnapshot] = []
 
     for task in state.get("tasks", []):
+        # Normalize status: "not_started" from state.yaml → "open" in snapshot
+        raw_status = task.get("status", "open")
+        status = "open" if raw_status == "not_started" else raw_status
         snapshots.append(
             WorkItemSnapshot(
                 id=str(task.get("number", "")),
                 title=task.get("title", ""),
-                status=task.get("status", "open"),
+                status=status,
                 spec_traces=task.get("traces", []),
                 depends_on=[str(d) for d in task.get("depends_on", [])],
+                produces=task.get("produces", []),
+                description=task.get("description", ""),
+                acceptance_criteria=task.get("acceptance_criteria", []),
                 is_hole=False,
             )
         )
 
     for hole in state.get("holes", []):
+        raw_status = hole.get("status", "open")
+        status = "open" if raw_status == "not_started" else raw_status
         snapshots.append(
             WorkItemSnapshot(
                 id=str(hole.get("number", "")),
                 title=hole.get("title", ""),
-                status=hole.get("status", "open"),
+                status=status,
                 spec_traces=hole.get("traces", []),
                 is_hole=True,
                 hole_type=hole.get("type", ""),

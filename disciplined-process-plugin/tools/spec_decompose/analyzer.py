@@ -100,6 +100,98 @@ def read_spec_files(paths: list[Path]) -> SpecBundle:
     )
 
 
+@dataclass
+class SpecShard:
+    """A shard of a large spec for staged processing."""
+
+    index: int
+    content: str
+    token_count: int
+    is_overview: bool = False
+
+
+def shard_spec(
+    spec_text: str,
+    max_tokens: int = 150_000,
+) -> list[SpecShard]:
+    """Split a large spec into processable shards.
+
+    Strategy:
+    1. Overview shard: all headers + first N tokens of each section
+    2. Cluster shards: full text of sections, grouped to fit budget
+
+    Args:
+        spec_text: Full combined spec text.
+        max_tokens: Maximum tokens per shard.
+
+    Returns:
+        List of SpecShard. Single-element list if spec fits in one shard.
+    """
+    total = count_tokens(spec_text)
+    if total <= max_tokens:
+        return [SpecShard(index=0, content=spec_text, token_count=total)]
+
+    # Split by markdown headers (## level)
+    sections: list[tuple[str, str]] = []  # (header, content)
+    current_header = ""
+    current_lines: list[str] = []
+
+    for line in spec_text.split("\n"):
+        if line.startswith("## "):
+            if current_lines:
+                sections.append((current_header, "\n".join(current_lines)))
+            current_header = line
+            current_lines = [line]
+        else:
+            current_lines.append(line)
+    if current_lines:
+        sections.append((current_header, "\n".join(current_lines)))
+
+    # Overview shard: headers + first 200 tokens of each section
+    overview_parts: list[str] = []
+    for header, content in sections:
+        lines = content.split("\n")
+        # Take header + first 10 lines as overview
+        overview_parts.append("\n".join(lines[:10]))
+    overview_text = "\n\n".join(overview_parts)
+    overview_tokens = count_tokens(overview_text)
+
+    shards: list[SpecShard] = [
+        SpecShard(index=0, content=overview_text, token_count=overview_tokens, is_overview=True)
+    ]
+
+    # Cluster remaining sections into shards
+    current_shard_parts: list[str] = []
+    current_shard_tokens = 0
+    shard_idx = 1
+
+    for _header, content in sections:
+        section_tokens = count_tokens(content)
+        if current_shard_tokens + section_tokens > max_tokens and current_shard_parts:
+            shard_text = "\n\n".join(current_shard_parts)
+            shards.append(SpecShard(
+                index=shard_idx,
+                content=shard_text,
+                token_count=current_shard_tokens,
+            ))
+            shard_idx += 1
+            current_shard_parts = []
+            current_shard_tokens = 0
+
+        current_shard_parts.append(content)
+        current_shard_tokens += section_tokens
+
+    if current_shard_parts:
+        shard_text = "\n\n".join(current_shard_parts)
+        shards.append(SpecShard(
+            index=shard_idx,
+            content=shard_text,
+            token_count=current_shard_tokens,
+        ))
+
+    return shards
+
+
 def _read_one(path: Path) -> SpecFile:
     """Read a single spec file."""
     try:

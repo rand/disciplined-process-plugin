@@ -190,6 +190,69 @@ def should_merge(estimate: TaskEstimate) -> bool:
     return estimate.total < 5_000
 
 
+@dataclass
+class SizingWarning:
+    """Warning from post-hoc sizing validation."""
+
+    task_number: int | str
+    task_title: str
+    estimated_total: int
+    ceiling: int
+    message: str
+
+
+def validate_decomposition_sizing(
+    tasks: list[dict[str, Any]],
+    context_window: int = 200_000,
+) -> list[SizingWarning]:
+    """Validate that every task fits within the budget ceiling.
+
+    Checks each task's estimated_tokens against the computed budget.
+    Returns warnings for any task that exceeds limits.
+
+    Args:
+        tasks: List of task dicts with 'estimated_tokens'.
+        context_window: Context window size in tokens.
+
+    Returns:
+        List of SizingWarning for over-budget tasks.
+    """
+    budget = compute_budget(context_window)
+    warnings: list[SizingWarning] = []
+
+    for t in tasks:
+        est = t.get("estimated_tokens", {})
+        total = est.get("total", 0)
+        overhead = est.get("overhead", 0)
+
+        if total > budget.total_ceiling:
+            warnings.append(SizingWarning(
+                task_number=t["number"],
+                task_title=t.get("title", ""),
+                estimated_total=total,
+                ceiling=budget.total_ceiling,
+                message=(
+                    f"Task {t['number']} ({t.get('title', '')}) estimated at "
+                    f"~{total:,} tokens exceeds total ceiling of "
+                    f"~{budget.total_ceiling:,} tokens. Consider splitting."
+                ),
+            ))
+        elif overhead > budget.overhead_ceiling:
+            warnings.append(SizingWarning(
+                task_number=t["number"],
+                task_title=t.get("title", ""),
+                estimated_total=total,
+                ceiling=budget.overhead_ceiling,
+                message=(
+                    f"Task {t['number']} ({t.get('title', '')}) overhead at "
+                    f"~{overhead:,} tokens exceeds overhead ceiling of "
+                    f"~{budget.overhead_ceiling:,} tokens. Consider splitting."
+                ),
+            ))
+
+    return warnings
+
+
 # Common configurations from the spec
 WINDOW_PRESETS: dict[str, int] = {
     "claude-code": 200_000,

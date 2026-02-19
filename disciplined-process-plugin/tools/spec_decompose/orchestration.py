@@ -63,6 +63,14 @@ def generate_orchestration_script(
     lines.append("fi")
     lines.append("")
 
+    # Check for produces/consumes conflicts in parallel groups (Gap 10)
+    conflict_warnings = _detect_parallel_conflicts(tasks, groups)
+    if conflict_warnings:
+        lines.append("# WARNING: File conflicts detected in parallel groups:")
+        for w in conflict_warnings:
+            lines.append(f"#   {w}")
+        lines.append("")
+
     # Generate phases
     for i, group in enumerate(groups, 1):
         group_name = group.get("name", f"phase-{i}")
@@ -105,10 +113,35 @@ def generate_orchestration_script(
         lines.append("done")
         lines.append("")
 
-        # Verification gate
+        # Per-task verification gate (Gap 5)
         lines.append(f'echo "Verifying Phase {i}..."')
         lines.append("phase_ok=true")
         lines.append("")
+
+        for tn in task_numbers:
+            # Find acceptance criteria with test paths
+            task_data = None
+            for t in tasks:
+                if t["number"] == tn:
+                    task_data = t
+                    break
+            if task_data:
+                criteria = task_data.get("acceptance_criteria", [])
+                test_cmds = [c for c in criteria if c.startswith("pytest ") or c.startswith("test ")]
+                lines.append(f"# Verify T{tn} completed")
+                lines.append(
+                    f'T{tn}_STATUS=$(bd list --status closed --json 2>/dev/null '
+                    f'| jq -r \'[.[] | select(.title | test("T{tn}|task.*{tn}"; "i"))][0].status // "open"\' || echo open)'
+                )
+                lines.append(f'if [ "$T{tn}_STATUS" != "closed" ]; then')
+                lines.append(f'  echo "WARNING: T{tn} not closed after Phase {i}"')
+                lines.append("  phase_ok=false")
+                lines.append("fi")
+                if test_cmds:
+                    for cmd in test_cmds[:1]:
+                        lines.append(f"# Run acceptance test for T{tn}")
+                        lines.append(f"{cmd} || {{ echo 'Test failed for T{tn}'; phase_ok=false; }}")
+                lines.append("")
 
         # Check for new blockers
         lines.append(
@@ -262,6 +295,51 @@ def write_orchestration_output(
         paths.append(pull_path)
 
     return paths
+
+
+def _detect_parallel_conflicts(
+    tasks: list[dict[str, Any]],
+    groups: list[dict[str, Any]],
+) -> list[str]:
+    """Detect file-level conflicts between parallel tasks.
+
+    When two tasks in the same parallel group both produce the same file,
+    they may conflict at runtime.
+
+    Returns:
+        List of warning strings.
+    """
+    warnings: list[str] = []
+
+    # Build task number -> produces mapping
+    produces_map: dict[int, list[str]] = {}
+    for t in tasks:
+        tn = t["number"]
+        produces = t.get("produces", [])
+        if not produces:
+            # Check orchestration metadata
+            orch = t.get("orchestration", {})
+            if isinstance(orch, dict):
+                produces = orch.get("produces", [])
+                if isinstance(produces, str):
+                    produces = [produces]
+        produces_map[tn] = produces
+
+    for group in groups:
+        group_tasks = group.get("tasks", [])
+        # Check all pairs in the group
+        for i, t1 in enumerate(group_tasks):
+            for t2 in group_tasks[i + 1:]:
+                files_1 = set(produces_map.get(t1, []))
+                files_2 = set(produces_map.get(t2, []))
+                conflicts = files_1 & files_2
+                if conflicts:
+                    warnings.append(
+                        f"Tasks T{t1} and T{t2} in group '{group.get('name', '?')}' "
+                        f"both produce: {', '.join(sorted(conflicts))}"
+                    )
+
+    return warnings
 
 
 def _infer_phases(tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:

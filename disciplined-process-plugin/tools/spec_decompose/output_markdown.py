@@ -197,16 +197,26 @@ def generate_state_yaml(
 
     # Tasks
     for t in data.get("tasks", []):
-        state["tasks"].append({
+        task_entry: dict[str, Any] = {
             "number": t["number"],
             "title": t["title"],
-            "status": "open",
+            "status": "not_started",
             "priority": t.get("priority", 2),
             "depends_on": t.get("depends_on_tasks", []),
             "blocks": t.get("orchestration", {}).get("blocks", []),
             "traces": t.get("spec_traces", []),
             "estimated_tokens": t.get("estimated_tokens", {}).get("total", 0),
-        })
+        }
+        # Enrichment fields per schemas.md
+        if t.get("description"):
+            task_entry["description"] = t["description"]
+        if t.get("produces"):
+            task_entry["produces"] = t["produces"]
+        if t.get("orchestration", {}).get("consumes"):
+            task_entry["consumes"] = t["orchestration"]["consumes"]
+        if t.get("acceptance_criteria"):
+            task_entry["acceptance_criteria"] = t["acceptance_criteria"]
+        state["tasks"].append(task_entry)
 
     # Holes
     for h in data.get("holes", []):
@@ -214,7 +224,7 @@ def generate_state_yaml(
             "number": h["number"],
             "title": h["title"],
             "type": h["hole_type"],
-            "status": "open",
+            "status": "not_started",
             "blocks": h.get("blocks_tasks", []),
             "traces": h.get("traces", []),
         })

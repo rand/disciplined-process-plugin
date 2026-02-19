@@ -194,12 +194,43 @@ class TestEvaluateTriggers:
         result = evaluate_triggers(config, prev_state=prev, curr_state=curr)
         assert "all_work_hole_blocked" in result.fired
 
+    def test_on_rework_trigger(self):
+        """Gap 2: on_rework trigger fires when rework tasks appear."""
+        config = TriggerConfig(on_rework=True)
+        prev = ProjectState(
+            tasks=[_task(id="1", status="closed")]
+        )
+        curr = ProjectState(
+            tasks=[
+                _task(id="1", status="closed"),
+                _task(id="2", status="open", title="Rework: fix auth flow"),
+            ]
+        )
+        result = evaluate_triggers(config, prev_state=prev, curr_state=curr)
+        assert "on_rework" in result.fired
+
+    def test_on_rework_no_rework_tasks(self):
+        """on_rework should not fire when new tasks are normal."""
+        config = TriggerConfig(on_rework=True)
+        prev = ProjectState(
+            tasks=[_task(id="1", status="closed")]
+        )
+        curr = ProjectState(
+            tasks=[
+                _task(id="1", status="closed"),
+                _task(id="2", status="open", title="Add logging"),
+            ]
+        )
+        result = evaluate_triggers(config, prev_state=prev, curr_state=curr)
+        assert "on_rework" not in result.fired
+
     def test_no_triggers_fire(self):
         config = TriggerConfig(
             tasks_completed=0,
             issue_completed=False,
             epic_milestone=False,
             on_failure=False,
+            on_rework=False,
             on_blocker=False,
             hole_created=False,
             hole_resolved=False,

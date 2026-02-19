@@ -85,6 +85,12 @@ class TestBuildParser:
         args = parser.parse_args(["a.md", "b.md", "c.md"])
         assert len(args.spec_files) == 3
 
+    def test_api_flag(self) -> None:
+        """Gap 1: --api flag is parsed."""
+        parser = build_parser()
+        args = parser.parse_args(["test.md", "--api"])
+        assert args.api is True
+
 
 class TestMain:
     """Tests for main entry point with --json-input."""
@@ -149,3 +155,35 @@ class TestMain:
         assert rc == 0
         assert (output_dir / "README.md").exists()
         assert (output_dir / "state.yaml").exists()
+
+    def test_api_missing_anthropic_fails(self, tmp_path: Path, monkeypatch) -> None:
+        """Gap 1: --api fails gracefully without anthropic package."""
+        spec = tmp_path / "spec.md"
+        spec.write_text("# Test\n")
+
+        import tools.spec_decompose.invoke as invoke_mod
+        original = invoke_mod.invoke_via_api
+
+        def mock_invoke(*a, **kw):
+            raise ImportError("The 'anthropic' package is required")
+
+        monkeypatch.setattr(invoke_mod, "invoke_via_api", mock_invoke)
+        rc = main([str(spec), "--api"])
+        assert rc == 1
+        monkeypatch.setattr(invoke_mod, "invoke_via_api", original)
+
+    def test_api_success_with_mock(self, tmp_path: Path, monkeypatch) -> None:
+        """Gap 1: --api succeeds when invoke_via_api returns valid data."""
+        spec = tmp_path / "spec.md"
+        spec.write_text("# Test\n")
+
+        import tools.spec_decompose.invoke as invoke_mod
+        original = invoke_mod.invoke_via_api
+
+        def mock_invoke(*a, **kw):
+            return SAMPLE_DATA
+
+        monkeypatch.setattr(invoke_mod, "invoke_via_api", mock_invoke)
+        rc = main([str(spec), "--api", "--dry-run"])
+        assert rc == 0
+        monkeypatch.setattr(invoke_mod, "invoke_via_api", original)

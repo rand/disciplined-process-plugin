@@ -128,6 +128,33 @@ def generate_plan_markdown(data: dict[str, Any]) -> str:
                 lines.append(f"  {g['rationale']}")
         lines.append("")
 
+    # Critical path analysis
+    from tools.spec_decompose.graph import compute_critical_path
+    crit_path = compute_critical_path(tasks, holes)
+    if crit_path:
+        lines.append("## Critical Path Analysis")
+        lines.append("")
+        lines.append("The longest dependency chain (bottleneck):")
+        lines.append("")
+        lines.append("| Step | Task | Cumulative Tokens |")
+        lines.append("|------|------|-------------------|")
+        for i, entry in enumerate(crit_path, 1):
+            # Find title
+            title = str(entry.task_id)
+            for t in tasks:
+                if t["number"] == entry.task_id:
+                    title = t["title"]
+                    break
+            for h in holes:
+                if h["number"] == entry.task_id:
+                    title = f"HOLE: {h['title']}"
+                    break
+            lines.append(
+                f"| {i} | {entry.task_id}: {title} "
+                f"| ~{entry.cumulative_tokens:,} |"
+            )
+        lines.append("")
+
     # Coverage
     if coverage:
         total = coverage.get("requirements_total", 0)

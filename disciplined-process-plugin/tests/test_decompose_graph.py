@@ -9,8 +9,10 @@ import pytest
 
 from tools.spec_decompose.graph import (
     CoverageResult,
+    CriticalPathEntry,
     check_coverage,
     check_reachability,
+    compute_critical_path,
     topological_sort,
     validate_dag,
 )
@@ -226,6 +228,85 @@ class TestTopologicalSort:
         result = topological_sort(tasks)
         # Should be deterministic (sorted within each level)
         assert result == [1, 2, 3]
+
+
+class TestCriticalPath:
+    """Tests for critical path analysis (Gap 3)."""
+
+    def test_empty_returns_empty(self) -> None:
+        assert compute_critical_path([], []) == []
+
+    def test_single_task(self) -> None:
+        tasks = [{"number": 1, "depends_on_tasks": [],
+                  "estimated_tokens": {"total": 5000}}]
+        path = compute_critical_path(tasks)
+        assert len(path) == 1
+        assert path[0].task_id == 1
+        assert path[0].cumulative_tokens == 5000
+
+    def test_chain_is_full_path(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_tasks": [],
+             "estimated_tokens": {"total": 1000}},
+            {"number": 2, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 2000}},
+            {"number": 3, "depends_on_tasks": [2],
+             "estimated_tokens": {"total": 3000}},
+        ]
+        path = compute_critical_path(tasks)
+        ids = [e.task_id for e in path]
+        assert ids == [1, 2, 3]
+        # Cumulative: 1000, 3000, 6000
+        assert path[-1].cumulative_tokens == 6000
+
+    def test_picks_heavier_branch(self) -> None:
+        """In a diamond, should pick the heavier branch."""
+        tasks = [
+            {"number": 1, "depends_on_tasks": [],
+             "estimated_tokens": {"total": 1000}},
+            {"number": 2, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 500}},
+            {"number": 3, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 9000}},
+            {"number": 4, "depends_on_tasks": [2, 3],
+             "estimated_tokens": {"total": 1000}},
+        ]
+        path = compute_critical_path(tasks)
+        ids = [e.task_id for e in path]
+        # The heavier branch goes through task 3
+        assert 3 in ids
+        assert path[-1].task_id == 4
+
+    def test_cumulative_is_monotonic(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_tasks": [],
+             "estimated_tokens": {"total": 1000}},
+            {"number": 2, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 2000}},
+            {"number": 3, "depends_on_tasks": [2],
+             "estimated_tokens": {"total": 500}},
+        ]
+        path = compute_critical_path(tasks)
+        cumulative = [e.cumulative_tokens for e in path]
+        for i in range(1, len(cumulative)):
+            assert cumulative[i] >= cumulative[i - 1]
+
+    def test_path_is_valid_topo_order(self) -> None:
+        tasks = [
+            {"number": 1, "depends_on_tasks": [],
+             "estimated_tokens": {"total": 100}},
+            {"number": 2, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 200}},
+            {"number": 3, "depends_on_tasks": [1],
+             "estimated_tokens": {"total": 300}},
+        ]
+        path = compute_critical_path(tasks)
+        ids = [e.task_id for e in path]
+        # Task 1 should always come before any task that depends on it
+        if 1 in ids and 2 in ids:
+            assert ids.index(1) < ids.index(2)
+        if 1 in ids and 3 in ids:
+            assert ids.index(1) < ids.index(3)
 
 
 # Property-based tests
