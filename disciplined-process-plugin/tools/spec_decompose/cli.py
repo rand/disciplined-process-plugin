@@ -205,6 +205,7 @@ def main(argv: list[str] | None = None) -> int:
             model=args.model,
             constitution=constitution,
             auto_resolve=args.auto_resolve,
+            existing_code_path=str(args.existing_code) if args.existing_code else None,
         )
 
         # Print the subagent prompt for manual invocation
@@ -252,6 +253,52 @@ def main(argv: list[str] | None = None) -> int:
         print(generate_plan_markdown(data))
         return 0
 
+    # Diff mode: generate incremental update instead of fresh plan
+    if args.diff:
+        from tools.spec_decompose.diff import (
+            compute_diff,
+            snapshot_from_beads_json,
+            snapshot_from_state_yaml,
+            write_diff_output,
+        )
+        import subprocess
+
+        # Get existing state from Beads or state.yaml
+        existing: list = []
+        state_yaml = Path("docs/tasks/state.yaml")
+        if state_yaml.exists():
+            existing = snapshot_from_state_yaml(state_yaml)
+        else:
+            try:
+                result = subprocess.run(
+                    ["bd", "list", "--json"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+                if result.returncode == 0 and result.stdout.strip():
+                    existing = snapshot_from_beads_json(
+                        json.loads(result.stdout)
+                    )
+            except (subprocess.TimeoutExpired, FileNotFoundError, json.JSONDecodeError):
+                pass
+
+        if not existing:
+            print("Warning: No existing state found. Diff will treat all items as new.")
+
+        diff_result = compute_diff(existing, data)
+        output_dir = args.dir or Path(".")
+        diff_md, diff_sh = write_diff_output(
+            diff_result,
+            spec_source=", ".join(str(f.path) for f in bundle.files),
+            output_dir=output_dir,
+            existing_tasks=existing,
+        )
+        print(f"Diff plan: {diff_md}")
+        print(f"Diff script: {diff_sh}")
+        print(f"\nReview the diff, then run: bash {diff_sh}")
+        return 0
+
     # Generate output
     if args.output == "beads":
         plan_md, plan_sh = write_beads_output(
@@ -268,6 +315,21 @@ def main(argv: list[str] | None = None) -> int:
             spec_files=[str(f.path) for f in bundle.files],
         )
         print(f"Output directory: {out}")
+
+    # Orchestration scripts
+    if args.orchestrate:
+        from tools.spec_decompose.orchestration import write_orchestration_output
+
+        orch_dir = args.dir or Path(".")
+        orch_paths = write_orchestration_output(
+            data,
+            parallel_slots=args.parallel_slots,
+            output_dir=orch_dir,
+            include_pull_loop=True,
+        )
+        for p in orch_paths:
+            print(f"Orchestration: {p}")
+        print(f"\nAfter running the plan, execute: bash orchestrate.sh")
 
     return 0
 

@@ -31,6 +31,7 @@ class DecomposeParams:
     existing_state: dict[str, Any] | None = None  # For diff mode
     constitution: str | None = None
     auto_resolve: bool = False
+    existing_code_path: str | None = None  # For accurate file sizing
 
     @property
     def is_diff(self) -> bool:
@@ -61,6 +62,31 @@ def _build_user_message(params: DecomposeParams) -> str:
         parts.append("## Existing State (for diff mode)")
         parts.append("Produce a diff rather than a fresh decomposition.")
         parts.append(json.dumps(params.existing_state, indent=2))
+        parts.append("")
+
+    if params.existing_code_path:
+        parts.append("## Existing Codebase")
+        parts.append(f"Path: {params.existing_code_path}")
+        parts.append(
+            "Use actual file sizes for context_files that already exist. "
+            "Estimate sizes only for files that don't exist yet."
+        )
+        # Include a summary of existing file sizes
+        code_path = Path(params.existing_code_path)
+        if code_path.exists():
+            file_sizes: list[str] = []
+            for ext in ("*.py", "*.ts", "*.js", "*.rs", "*.go"):
+                for f in code_path.rglob(ext):
+                    try:
+                        tokens = count_tokens(f.read_text())
+                        file_sizes.append(f"  {f.relative_to(code_path)}: ~{tokens} tokens")
+                    except (OSError, UnicodeDecodeError):
+                        pass
+            if file_sizes:
+                parts.append("File token counts:")
+                parts.extend(file_sizes[:50])  # Cap at 50 files
+                if len(file_sizes) > 50:
+                    parts.append(f"  ... and {len(file_sizes) - 50} more")
         parts.append("")
 
     parts.append("## Output")
