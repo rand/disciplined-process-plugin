@@ -265,7 +265,8 @@ def main(argv: list[str] | None = None) -> int:
 
         # Get existing state from Beads or state.yaml
         existing: list = []
-        state_yaml = Path("docs/tasks/state.yaml")
+        task_dir = args.dir or Path("docs/tasks")
+        state_yaml = Path(task_dir) / "state.yaml"
         if state_yaml.exists():
             existing = snapshot_from_state_yaml(state_yaml)
         else:
