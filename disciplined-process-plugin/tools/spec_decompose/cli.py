@@ -329,7 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     # Generate output
     if args.output == "beads":
         plan_md, plan_sh = write_beads_output(
-            data, epic_title=args.epic_title
+            data, output_dir=args.dir, epic_title=args.epic_title
         )
         print(f"Plan: {plan_md}")
         print(f"Script: {plan_sh}")

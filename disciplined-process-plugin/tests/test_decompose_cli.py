@@ -156,6 +156,24 @@ class TestMain:
         assert (output_dir / "README.md").exists()
         assert (output_dir / "state.yaml").exists()
 
+    def test_beads_output_respects_dir(self, tmp_path: Path) -> None:
+        """Bug fix: --dir flag should be respected for beads output."""
+        spec = tmp_path / "spec.md"
+        spec.write_text("# Test\n")
+        json_file = tmp_path / "decompose.json"
+        json_file.write_text(json.dumps(SAMPLE_DATA))
+        output_dir = tmp_path / "beads-output"
+
+        rc = main([
+            str(spec),
+            "--json-input", str(json_file),
+            "--output", "beads",
+            "--dir", str(output_dir),
+        ])
+        assert rc == 0
+        assert (output_dir / "decompose-plan.md").exists()
+        assert (output_dir / "decompose-plan.sh").exists()
+
     def test_api_missing_anthropic_fails(self, tmp_path: Path, monkeypatch) -> None:
         """Gap 1: --api fails gracefully without anthropic package."""
         spec = tmp_path / "spec.md"

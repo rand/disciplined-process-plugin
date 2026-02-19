@@ -294,6 +294,7 @@ def write_beads_output(
     """
     if output_dir is None:
         output_dir = Path(".")
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     plan_md = output_dir / "decompose-plan.md"
     plan_sh = output_dir / "decompose-plan.sh"

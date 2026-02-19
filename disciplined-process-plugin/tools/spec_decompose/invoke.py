@@ -151,8 +151,8 @@ def invoke_via_api(params: DecomposeParams) -> dict[str, Any]:
     user_message = _build_user_message(params)
 
     model_map = {
-        "opus": "claude-opus-4-20250514",
-        "sonnet": "claude-sonnet-4-20250514",
+        "opus": "claude-opus-4-6",
+        "sonnet": "claude-sonnet-4-6",
     }
     model = model_map.get(params.model, params.model)
 
